@@ -14,7 +14,7 @@ def list_tables(file):
         connection.close()
         return [table[0] for table in tables]
     except sqlite3.Error as ex:
-            print(f"Ошибка при работе с базой данных: {e}")
+            print(f"Ошибка при работе с базой данных: {ex}")
             return []
 
 def get_table(file, name):
@@ -32,7 +32,7 @@ def get_table(file, name):
         num_columns = len(columns)
         return table, (num_rows, num_columns)
     except sqlite3.Error as ex:
-        print(f"Ошибка при работе с базой данных: {e}")
+        print(f"Ошибка при работе с базой данных: {ex}")
         return None, (0, 0)
     
 def get_cell_value(file, name, i, j):
