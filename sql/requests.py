@@ -41,3 +41,29 @@ def get_cell_value(file, name, i, j):
         return table[i][j]
     else:
         raise IndexError("Индексы выходят за пределы таблицы")
+    
+def get_merged_table(file):
+    try:
+        connection = connect_db(file)
+        cursor = connection.cursor()
+        query = """SELECT 
+                    e.kod, e.name, e.region, e.city, e.grnti, g.rubrika, r.oblname
+                FROM 
+                    Experts e
+                JOIN 
+                    Reg_Obl_City r ON e.region = r.region AND e.city = r.city
+                LEFT JOIN 
+                    grntirub g 
+                ?????????? """
+        cursor.execute(query)
+        table = cursor.fetchall()
+        columns = [description[0] for description in cursor.description]
+        table.insert(0, columns)
+        cursor.close()
+        connection.close()
+        num_rows = len(table)
+        num_columns = len(columns)
+        return table, (num_rows, num_columns)
+    except sqlite3.Error as ex:
+        print(f"Ошибка при работе с базой данных: {ex}")
+        return None, (0, 0)
