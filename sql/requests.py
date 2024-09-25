@@ -85,7 +85,7 @@ def get_merged_table(file):
 
         # Construct the SELECT clause to convert all columns to text
         select_clause = ", ".join([f"CAST(Experts.{col[1]} AS TEXT) AS {col[1]}" for col in columns_experts] +
-                                  [f"CAST(Reg_obl_city.oblname AS TEXT) AS oblname", f"CAST(Reg_obl_city.city AS TEXT) AS city"] +
+                                  [f"CAST(Reg_obl_city.oblname AS TEXT) AS oblname"] +
                                   [f"CAST(grntirub.{col[1]} AS TEXT) AS grntirub_{col[1]}" for col in columns_grntirub])
 
         # Select all columns from Experts, Reg_obl_city and grntirub tables
@@ -107,26 +107,27 @@ def get_merged_table(file):
                 ) = grntirub.codrub
             WHERE
                 Experts.grnti IS NOT NULL
-            
         """
-        cursor.execute(query)
 
-        # Fetch all rows
+        # Execute the query and fetch all rows
+        cursor.execute(query)
         merged_table = cursor.fetchall()
 
         # Add the column names as the first row of the merged table
-        merged_table.insert(0, [col[1] for col in columns_experts] + ["oblname", "city"] + [f"grntirub_{col[1]}" for col in columns_grntirub])
+        if merged_table:
+            merged_table.insert(0, [col[1] for col in columns_experts] + ["oblname"] + [f"grntirub_{col[1]}" for col in columns_grntirub])
 
         cursor.close()
         connection.close()
 
-        return merged_table, (len(merged_table) - 1, len(merged_table[0]))
+        return merged_table, (len(merged_table) - 1, len(merged_table[0])) if merged_table else (None, (0, 0))
     except sqlite3.Error as ex:
         print(f"Error while working with the database: {ex}")
         return None, (0, 0)
     except IndexError as ex:
         print(f"Error while working with the database: {ex}")
-        return None, (0, 0)    
+        return None, (0, 0)
+    
 def get_combined_table(file, table_name, merge):
     if merge:
         return get_merged_table(file)
