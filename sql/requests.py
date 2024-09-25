@@ -1,5 +1,4 @@
 import sqlite3
-from const import *
 
 def connect_db(file):
     return sqlite3.connect(file)
@@ -17,22 +16,21 @@ def list_tables(file):
             print(f"Ошибка при работе с базой данных: {ex}")
             return []
 
-def get_table(file, name):
+def get_table(file, table_name):
     try:
         connection = connect_db(file)
         cursor = connection.cursor()
-        query = f"SELECT * FROM {name}"
-        cursor.execute(query)
+        cursor.execute(f"PRAGMA table_info({table_name});")
+        columns = cursor.fetchall()
+        select_clause = ", ".join([f"CAST({col[1]} AS TEXT) AS {col[1]}_text" for col in columns])
+        cursor.execute(f"SELECT {select_clause} FROM {table_name};")
         table = cursor.fetchall()
-        columns = [description[0] for description in cursor.description]
-        table.insert(0, columns)
-        cursor.close()
-        connection.close()
         num_rows = len(table)
         num_columns = len(columns)
+        connection.close()
         return table, (num_rows, num_columns)
     except sqlite3.Error as ex:
-        print(f"Ошибка при работе с базой данных: {ex}")
+        print(f"Error while working with the database: {ex}")
         return None, (0, 0)
     
 def get_cell_value(file, name, i, j):
