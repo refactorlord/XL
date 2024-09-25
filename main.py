@@ -1,6 +1,7 @@
 # PyQt6 Application with Menu 
 
-import sys 
+import sys
+import os
 from PySide6.QtCore import QRect
 from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QTableWidget, QWidget, QTableWidgetItem
 from PyQt6.QtGui import QAction
@@ -31,7 +32,7 @@ class MyApp(QMainWindow):
         report_menu = menubar.addMenu("Отчет")
         help_menu = menubar.addMenu("Помощь")
         action1 = QAction("Все таблицы", self) 
-        action1.triggered.connect(lambda: self.get_table_ui("all")) 
+        action1.triggered.connect(lambda: self.get_table_ui("all", True)) 
         data_menu.addAction(action1) 
         
         action2 = QAction("Ученые", self)
@@ -60,9 +61,10 @@ class MyApp(QMainWindow):
             ["Row5-Col1", "Row5-Col2", "Row5-Col3"],
         ]
 
-    def get_table_ui(self, name):
-        file = "data/DATABASE.db"
-        tb, (rows, cols) = get_table(file, name)
+    def get_table_ui(self, name, flag=False):
+        file = os.path.join("data", "DATABASE.db")
+        tb, (rows, cols) = get_combined_table(file, name, flag)
+        #print(rows, cols)
         self.table = QTableWidget(rows, cols)
         self.setCentralWidget(self.table)
         self.insert_data(tb, rows, cols)

@@ -35,7 +35,7 @@ def get_table(file, table_name):
         columns = cursor.fetchall()
 
         # Construct the SELECT clause to convert all columns to text
-        select_clause = ", ".join([f"CAST({col[1]} AS TEXT) AS {col[1]}_text" for col in columns])
+        select_clause = ", ".join([f"CAST({col[1]} AS TEXT) AS {col[1]}" for col in columns])
 
         # Execute the query and fetch the result
         cursor.execute(f"SELECT {select_clause} FROM {table_name};")
@@ -44,7 +44,7 @@ def get_table(file, table_name):
         # Add the column names as the first row of the table
         num_rows = len(table)
         num_columns = len(columns)
-        table.insert(0, [col[1] + "_text" for col in columns])
+        table.insert(0, [col[1] for col in columns])
         connection.close()
         return table, (num_rows, num_columns)
     except sqlite3.Error as ex:
@@ -60,7 +60,7 @@ def get_cell_value(file, name, i, j):
     
 def get_merged_table(file):
     """
-    Returns a merged table of Experts and Reg_Obl_City tables and grntirub table filtered by the first two characters of the grnti field.
+    Returns a merged table of Experts and Reg_obl_city tables and grntirub table filtered by the first two characters of the grnti field.
 
     Args:
         file (str): path to the SQLite database file
@@ -71,26 +71,39 @@ def get_merged_table(file):
     try:
         connection = connect_db(file)
         cursor = connection.cursor()
-        # Select all columns from Experts, Reg_Obl_City and grntirub tables
+        # Get the column names and types of the table
+        cursor.execute("PRAGMA table_info(Experts);")
+        columns_experts = cursor.fetchall()
+        cursor.execute("PRAGMA table_info(Reg_obl_city);")
+        columns_regions = cursor.fetchall()
+        cursor.execute("PRAGMA table_info(grntirub);")
+        columns_grntirub = cursor.fetchall()
+
+        # Construct the SELECT clause to convert all columns to text
+        select_clause = ", ".join([f"CAST(Experts.{col[1]} AS TEXT) AS {col[1]}" for col in columns_experts] +
+                                  [f"CAST(Reg_obl_city.{col[1]} AS TEXT) AS {col[1]}" for col in columns_regions] +
+                                  [f"CAST(grntirub.{col[1]} AS TEXT) AS {col[1]}" for col in columns_grntirub])
+
+        # Select all columns from Experts, Reg_obl_city and grntirub tables
         # by joining tables on the region and city fields
         # and filtering grntirub table by the first two characters of the grnti field
-        query = """
+        query = f"""
             SELECT 
-                kod, name, region, city, grnti, rubrika, obl_name
+                {select_clause}
             FROM 
                 Experts
             JOIN 
-                Reg_Obl_City ON Experts.region = Reg_Obl_City.region AND Experts.city = Reg_Obl_City.city
+                Reg_obl_city ON Experts.region = Reg_obl_city.region AND Experts.city = Reg_obl_city.city
             LEFT JOIN 
-                grntirub ON SUBSTR(Experts.grnti, 1, 2) = SUBSTR(grntirub.grnti, 1, 2)
+                grntirub ON SUBSTR(Experts.grnti, 1, 2) = SUBSTR(grntirub.rubrika, 1, 2)
         """
         cursor.execute(query)
 
-        # Get the column names from the cursor description
-        merged_table = [description[0] for description in cursor.description]
+        # Fetch all rows
+        merged_table = cursor.fetchall()
 
-        # Fetch all rows and add them to the merged table
-        merged_table.extend(cursor.fetchall())
+        # Add the column names as the first row of the merged table
+        merged_table.insert(0, [col[1] for col in columns_experts + columns_regions + columns_grntirub])
 
         cursor.close()
         connection.close()
@@ -99,3 +112,9 @@ def get_merged_table(file):
     except sqlite3.Error as ex:
         print(f"Error while working with the database: {ex}")
         return None, (0, 0)
+    
+def get_combined_table(file, table_name, merge):
+    if merge:
+        return get_merged_table(file)
+    else:
+        return get_table(file, table_name)
