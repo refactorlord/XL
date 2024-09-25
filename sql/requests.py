@@ -79,6 +79,10 @@ def get_merged_table(file):
         cursor.execute("PRAGMA table_info(grntirub);")
         columns_grntirub = cursor.fetchall()
 
+        # Check if the list of columns is not empty
+        if not columns_experts or not columns_regions or not columns_grntirub:
+            raise IndexError("The table does not exist")
+
         # Construct the SELECT clause to convert all columns to text
         select_clause = ", ".join([f"CAST(Experts.{col[1]} AS TEXT) AS {col[1]}" for col in columns_experts] +
                                   [f"CAST(Reg_obl_city.{col[1]} AS TEXT) AS {col[1]}" for col in columns_regions] +
@@ -88,14 +92,21 @@ def get_merged_table(file):
         # by joining tables on the region and city fields
         # and filtering grntirub table by the first two characters of the grnti field
         query = f"""
-            SELECT 
-                {select_clause}
+                SELECT {select_clause}
             FROM 
                 Experts
-            JOIN 
-                Reg_obl_city ON Experts.region = Reg_obl_city.region AND Experts.city = Reg_obl_city.city
+            INNER JOIN 
+                Reg_obl_city 
+                ON Experts.region = Reg_obl_city.region
             LEFT JOIN 
-                grntirub ON SUBSTR(Experts.grnti, 1, 2) = SUBSTR(grntirub.rubrika, 1, 2)
+                grntirub 
+                ON COALESCE(
+                    SUBSTR(Experts.grnti, 1, INSTR(Experts.grnti, '.') - 1),
+                    SUBSTR(Experts.grnti, 1, INSTR(Experts.grnti, ';') - 1)
+                ) = grntirub.codrub
+            WHERE
+                Experts.grnti IS NOT NULL
+            
         """
         cursor.execute(query)
 
@@ -110,6 +121,9 @@ def get_merged_table(file):
 
         return merged_table, (len(merged_table) - 1, len(merged_table[0]))
     except sqlite3.Error as ex:
+        print(f"Error while working with the database: {ex}")
+        return None, (0, 0)
+    except IndexError as ex:
         print(f"Error while working with the database: {ex}")
         return None, (0, 0)
     
