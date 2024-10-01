@@ -50,7 +50,29 @@ def get_table(file, table_name):
     except sqlite3.Error as ex:
         print(f"Error while working with the database: {ex}")
         return None, (0, 0)
-    
+
+def add_row_to_table(file: str, table_name: str, data: list) -> None:
+    """
+    Adds a row to the specified table in the SQLite database file.
+
+    Args:
+        file (str): path to the SQLite database file
+        table_name (str): name of the table
+        data (list): data to be inserted, length must match the number of columns in the table
+    """
+    connection = connect_db(file)
+    cursor = connection.cursor()
+
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    column_names = [column[1] for column in cursor.fetchall()]
+
+    query = f"INSERT INTO {table_name} ({', '.join(column_names)}) VALUES ({', '.join(['?'] * len(column_names))})"
+
+    cursor.execute(query, data)
+
+    connection.commit()
+    connection.close()
+
 def get_cell_value(file, name, i, j):
     table, (rows, columns) = get_table(file, name)
     if 0 <= i < rows and 0 <= j < columns:

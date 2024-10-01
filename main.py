@@ -52,14 +52,6 @@ class MyApp(QMainWindow):
             for column in range(cols):
                 self.table.setItem(row, column, QTableWidgetItem(data[row][column]))
 
-    def def2(self):
-        return [
-            ["Row1-Col1", "Row1-Col2", "Row1-Col3"],
-            ["Row2-Col1", "Row2-Col2", "Row2-Col3"],
-            ["Row3-Col1", "Row3-Col2", "Row3-Col3"],
-            ["Row4-Col1", "Row4-Col2", "Row4-Col3"],
-            ["Row5-Col1", "Row5-Col2", "Row5-Col3"],
-        ]
 
     def get_table_ui(self, name, flag=False):
         file = os.path.join("data", "DATABASE.db")
@@ -69,7 +61,12 @@ class MyApp(QMainWindow):
         self.setCentralWidget(self.table)
         self.insert_data(tb, rows, cols)
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
+    file = os.path.join("data", "DATABASE.db")
+    print(get_table(file, "grntirub"))
+    add_row_to_table(file, "grntirub", [1003, "check this"])
+    print(get_table(file, "grntirub"))
+    #print(list_tables("data/DATABASE.db"))
     app = QApplication(sys.argv) 
     window = MyApp()
     window.show()
