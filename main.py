@@ -15,15 +15,30 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QTransform)
 from PySide6.QtWidgets import (QApplication, QHeaderView, QMainWindow, QMenu,
     QMenuBar, QSizePolicy, QStatusBar, QTableWidget,
-    QTableWidgetItem, QWidget)
-from sql.requests import *
-
+    QTableWidgetItem, QWidget, QTableView)
+from sql.requests import * 
 class MyApp(QMainWindow): 
     def __init__(self): 
         super().__init__()
         self.setWindowTitle("Управление организацией экспертизы научно-технических проектов") 
-        self.setGeometry(100, 100, 600, 400) 
+        self.setGeometry(1080, 1080, 1920, 1920) 
+        self.setStyleSheet(u"background-color:qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(60, 52, 57, 255), stop:0.4375 rgba(66, 53, 65, 255), stop:0.994318 rgba(63, 51, 69, 255));\n color: white; \n font: 12pt 'Times New Roman'; \n"
+"")     
         self.create_menu()
+        self.create_context_menu()
+        self.dialogs = list()
+
+    def create_context_menu(self):
+        # Создание контекстного меню
+        self.context_menu = QMenu(self)
+        add_data = self.context_menu.addAction("Добавить данные")
+        del_data = self.context_menu.addAction("Удалить данные")
+        ch_data = self.context_menu.addAction("Изменить данные")
+ 
+        # Добавляем к нему функции 
+        add_data.triggered.connect(self.add_data_triggered)
+        del_data.triggered.connect(self.del_data_triggered)
+        ch_data.triggered.connect(self.ch_data_triggered)
 
     def create_menu(self): 
         menubar = self.menuBar() 
@@ -35,7 +50,7 @@ class MyApp(QMainWindow):
         action1.triggered.connect(lambda: self.get_table_ui("all", True)) 
         data_menu.addAction(action1) 
         
-        action2 = QAction("Ученые", self)
+        action2 = QAction("Эксперты", self)
         action2.triggered.connect(lambda: self.get_table_ui("Experts")) 
         data_menu.addAction(action2) 
  
@@ -58,8 +73,50 @@ class MyApp(QMainWindow):
         tb, (rows, cols) = get_combined_table(file, name, flag)
         #print(rows, cols)
         self.table = QTableWidget(rows, cols)
+      
+        self.table.setStyleSheet(u"gridline-color:white; \n; color: white; \n""")
+        stylesheet = "::section{Background-color:qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1, stop:0 rgba(60, 52, 57, 255), stop:0.4375 rgba(66, 53, 65, 255), stop:0.994318 rgba(63, 51, 69, 255));\n gridline-color:white; \n; color: white; \n}"
+        self.table.verticalHeader().setStyleSheet(stylesheet)
+        self.table.horizontalHeader().setStyleSheet(stylesheet)
+
+        
+        self.table.setColumnCount(cols)
+        self.table.setRowCount(rows)
         self.setCentralWidget(self.table)
         self.insert_data(tb, rows, cols)
+    
+    def contextMenuEvent(self, event):
+        # Show the context menu
+        self.context_menu.exec(event.globalPos())
+ 
+    def add_data_triggered(self):
+        dialog = add_data_window()
+        dialog.show()
+        
+ 
+    def del_data_triggered(self):
+        dialog = del_data_window()
+        dialog.show()
+        
+ 
+    def ch_data_triggered(self):
+        dialog = ch_data_window()
+        dialog.show()
+        
+class add_data_window(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Добавление новых данных")
+
+class del_data_window(QMainWindow):
+    def __init__(self):
+        super(del_data_window, self).__init__()
+        self.setWindowTitle("Удаление данных")
+class ch_data_window(QMainWindow):
+    def __init__(self):
+        super(ch_data_window, self).__init__()
+        self.setWindowTitle("Редактирование данных")
+    
 
 if __name__ == "__main__":
     file = os.path.join("data", "DATABASE.db")
