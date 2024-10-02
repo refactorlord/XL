@@ -1,4 +1,4 @@
-from sql.table_utils import get_table, get_rows_in_table, get_columns_in_table
+from sql.get_utils import *
 
 def get_cell_value(file, name, i, j):
     table = get_table(file, name)
@@ -8,3 +8,4 @@ def get_cell_value(file, name, i, j):
         return table[i][j]
     else:
         raise IndexError("Индексы выходят за пределы таблицы")
+    

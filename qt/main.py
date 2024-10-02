@@ -15,9 +15,10 @@ from PySide6.QtWidgets import (QApplication, QHeaderView, QMainWindow, QMenu,
     QMenuBar, QSizePolicy, QStatusBar, QTableWidget,
     QTableWidgetItem, QWidget)
 
-from sql.cell_utils import get_cell_value
-from sql.table_utils import *
-from sql.merged_table_utils import *
+from sql.cell_utils import *
+from sql.edit_utils import *
+from sql.get_utils import *
+from sql.get_merged_utils import *
 
 class MyApp(QMainWindow): 
     def __init__(self): 
