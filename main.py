@@ -73,7 +73,7 @@ class MyApp(QMainWindow):
         self.table.horizontalHeader().setStyleSheet("QHeaderView::section { background-color: rgb(53, 53, 53); color: white; }")
         self.table.verticalHeader().setStyleSheet("QHeaderView::section { background-color: rgb(53, 53, 53); color: white; }")
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-
+        self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         #self.setCentralWidget(self.table)
         self.setCentralWidget(self.table)
 
