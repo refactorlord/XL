@@ -1,6 +1,7 @@
-from PyQt6.QtWidgets import QMainWindow, QMenu, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, QAbstractItemView
+from PyQt6.QtWidgets import QMainWindow, QMenu, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, QAbstractItemView, QPushButton
 from PyQt6.QtGui import QPalette, QColor, QAction
 from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import QRect
 import os, sys
 from sql.requests import *
 
@@ -9,7 +10,8 @@ class MyApp(QMainWindow):
         super().__init__()
         self.setWindowTitle("Управление организацией экспертизы научно-технических проектов") 
         self.setGeometry(100, 100, 800, 600) 
-        self.set_dark_theme()    
+        self.dark_theme = DarkTheme() 
+        self.dark_theme.apply(self)    
         self.create_menu()
         self.create_context_menu()
         self.setMouseTracking(True)
@@ -66,7 +68,8 @@ class MyApp(QMainWindow):
         self.table.setColumnCount(cols)
         self.table.setRowCount(rows)
         self.insert_data(tb, rows, cols)
-        self.set_dark_theme()
+        self.dark_theme = DarkTheme() 
+        self.dark_theme.apply(self)
         self.table.horizontalHeader().setStyleSheet("QHeaderView::section { background-color: rgb(53, 53, 53); color: white; }")
         self.table.verticalHeader().setStyleSheet("QHeaderView::section { background-color: rgb(53, 53, 53); color: white; }")
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
@@ -79,47 +82,82 @@ class MyApp(QMainWindow):
         self.context_menu.exec(event.globalPos())
  
     def add_data_triggered(self):
-        dialog = add_data_window()
-        dialog.show()
+        
+        self.add_data_dialog = add_data_window()  # Создаем экземпляр окна
+        
+        self.add_data_dialog.show()  # Показываем окно
         
     def del_data_triggered(self):
-        dialog = del_data_window()
-        dialog.show()
+        self.del_data_window = del_data_window()
+        self.del_data_window.show()
         
     def ch_data_triggered(self):
-        dialog = ch_data_window()
-        dialog.show()
+        self.ch_data_window = ch_data_window()
+        self.ch_data_window.show()
+        
+class DarkTheme:
+    def __init__(self):
+        self.palette = QPalette()
+        self.set_colors()
 
-    def set_dark_theme(self):
-        palette = QPalette()
-        palette.setColor(QPalette.ColorRole.Window, QColor(53, 53, 53))
-        palette.setColor(QPalette.ColorRole.WindowText, QColor(255, 255, 255))
-        palette.setColor(QPalette.ColorRole.Base, QColor(35, 35, 35))
-        palette.setColor(QPalette.ColorRole.AlternateBase, QColor(53, 53, 53))
-        palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(255, 255, 255))
-        palette.setColor(QPalette.ColorRole.ToolTipText, QColor(255, 255, 255))
-        palette.setColor(QPalette.ColorRole.Text, QColor(255, 255, 255))
-        palette.setColor(QPalette.ColorRole.Button, QColor(53, 53, 53))
-        palette.setColor(QPalette.ColorRole.ButtonText, QColor(255, 255, 255))
-        palette.setColor(QPalette.ColorRole.BrightText, QColor(255, 0, 0))
-        palette.setColor(QPalette.ColorRole.Link, QColor(42, 130, 218))
-        palette.setColor(QPalette.ColorRole.Highlight, QColor(42, 130, 218))
-        palette.setColor(QPalette.ColorRole.HighlightedText, QColor(0, 0, 0))
-        self.setPalette(palette)
+    def set_colors(self):
+        self.palette.setColor(QPalette.ColorRole.Window, QColor(53, 53, 53))
+        self.palette.setColor(QPalette.ColorRole.WindowText, QColor(255, 255, 255))
+        self.palette.setColor(QPalette.ColorRole.Base, QColor(35, 35, 35))
+        self.palette.setColor(QPalette.ColorRole.AlternateBase, QColor(53, 53, 53))
+        self.palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(255, 255, 255))
+        self.palette.setColor(QPalette.ColorRole.ToolTipText, QColor(255, 255, 255))
+        self.palette.setColor(QPalette.ColorRole.Text, QColor(255, 255, 255))
+        self.palette.setColor(QPalette.ColorRole.Button, QColor(53, 53, 53))
+        self.palette.setColor(QPalette.ColorRole.ButtonText, QColor(255, 255, 255))
+        self.palette.setColor(QPalette.ColorRole.BrightText, QColor(255, 0, 0))
+        self.palette.setColor(QPalette.ColorRole.Link, QColor(42, 130, 218))
+        self.palette.setColor(QPalette.ColorRole.Highlight, QColor(42, 130, 218))
+        self.palette.setColor(QPalette.ColorRole.HighlightedText, QColor(0, 0, 0))
+
+    def apply(self, widget):
+        widget.setPalette(self.palette)
         
 class add_data_window(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Добавление новых данных")
+        self.setGeometry(100, 100, 400, 300)
+        self.button = QPushButton("Закрыть", self)
+        self.button.setGeometry(QRect(150, 120, 100, 30))
+        self.dark_theme = DarkTheme() 
+        self.dark_theme.apply(self)
+        self.button.clicked.connect(self.close_window)
+
+    def close_window(self):
+        self.close()  # Закрытие окна
 
 class del_data_window(QMainWindow):
     def __init__(self):
-        super(del_data_window, self).__init__()
+        super().__init__()
         self.setWindowTitle("Удаление данных")
+        self.setGeometry(100, 100, 400, 300)
+        self.button = QPushButton("Закрыть", self)
+        self.button.setGeometry(QRect(150, 120, 100, 30))
+        self.dark_theme = DarkTheme() 
+        self.dark_theme.apply(self)
+        self.button.clicked.connect(self.close_window)
+
+    def close_window(self):
+        self.close()  # Закрытие окна
 class ch_data_window(QMainWindow):
     def __init__(self):
-        super(ch_data_window, self).__init__()
+        super().__init__()
         self.setWindowTitle("Редактирование данных")
+        self.setGeometry(100, 100, 400, 300)
+        self.button = QPushButton("Закрыть", self)
+        self.button.setGeometry(QRect(150, 120, 100, 30))
+        self.dark_theme = DarkTheme() 
+        self.dark_theme.apply(self)
+        self.button.clicked.connect(self.close_window)
+
+    def close_window(self):
+        self.close()  # Закрытие окна
     
 
 if __name__ == "__main__":
