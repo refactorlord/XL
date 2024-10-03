@@ -54,7 +54,6 @@ class MyApp(QMainWindow):
             for column in range(cols):
                 self.table.setItem(row, column, QTableWidgetItem(data[row][column]))
 
-
     def get_table_ui(self, name, flag=False):
         file = os.path.join("data", "DATABASE.db")
         if flag:
