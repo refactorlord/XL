@@ -14,7 +14,8 @@ def get_merged_table(file):
     try:
         connection = connect_db(file)
         cursor = connection.cursor()
-        # Get the column names and types of the table
+
+        # Check if the necessary tables exist
         cursor.execute("PRAGMA table_info(Experts);")
         columns_experts = cursor.fetchall()
         cursor.execute("PRAGMA table_info(Reg_obl_city);")
@@ -22,20 +23,20 @@ def get_merged_table(file):
         cursor.execute("PRAGMA table_info(grntirub);")
         columns_grntirub = cursor.fetchall()
 
-        # Check if the list of columns is not empty
         if not columns_experts or not columns_regions or not columns_grntirub:
-            raise IndexError("The table does not exist")
+            raise IndexError("One of the tables does not exist")
 
-        # Construct the SELECT clause to convert all columns to text
-        select_clause = ", ".join([f"CAST(Experts.{col[1]} AS TEXT) AS {col[1]}" for col in columns_experts] +
-                                  [f"CAST(Reg_obl_city.oblname AS TEXT) AS oblname"] +
-                                  [f"CAST(grntirub.{col[1]} AS TEXT) AS grntirub_{col[1]}" for col in columns_grntirub])
-
-        # Select all columns from Experts, Reg_obl_city and grntirub tables
-        # by joining tables on the region and city fields
-        # and filtering grntirub table by the first two characters of the grnti field
-        query = f"""
-                SELECT {select_clause}
+        # Define the select clause with the required columns in the correct order
+        query = """
+            SELECT 
+                CAST(Experts.kod AS TEXT) AS kod, 
+                Experts.name, 
+                Experts.grnti, 
+                grntirub.rubrika,
+                Experts.region,
+                Reg_obl_city.oblname, 
+                Experts.city, 
+                Experts.input_date
             FROM 
                 Experts
             INNER JOIN 
@@ -56,9 +57,12 @@ def get_merged_table(file):
         cursor.execute(query)
         merged_table = cursor.fetchall()
 
+        # Define the column names for the result in the desired order
+        column_names = ['Код', 'ФИО', 'Код "GRNTI"', 'Рубрика', 'Регион', 'Область', 'Город', 'Дата ввода']
+
         # Add the column names as the first row of the merged table
         if merged_table:
-            merged_table.insert(0, [col[1] for col in columns_experts] + ["oblname"] + [f"grntirub_{col[1]}" for col in columns_grntirub])
+            merged_table.insert(0, column_names)
 
         cursor.close()
         connection.close()
@@ -84,9 +88,9 @@ def get_merged_columns(file):
         columns_grntirub = cursor.fetchall()
 
         # Construct the list of column names
-        columns = [col[1] for col in columns_experts] + ["oblname"] + [f"grntirub_{col[1]}" for col in columns_grntirub]
+        column_names = ['Код', 'ФИО', 'Код "GRNTI"', 'Рубрика', 'Регион', 'Область', 'Город', 'Дата ввода']
 
-        return columns
+        return column_names
     except Exception as ex:
         print(f"Error while working with the database: {ex}")
         return None
