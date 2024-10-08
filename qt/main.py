@@ -20,60 +20,8 @@ from sql.edit_utils import *
 from sql.get_utils import *
 from sql.get_merged_utils import *
 
-class MyApp(QMainWindow): 
-    def __init__(self): 
-        super().__init__()
-        self.setWindowTitle("Управление организацией экспертизы научно-технических проектов") 
-        self.setGeometry(0, 0, 1000, 1000) 
-        self.create_menu()
 
-    def create_menu(self): 
-        menubar = self.menuBar() 
-        data_menu = menubar.addMenu("Данные")
-        groups_menu = menubar.addMenu("Группы")
-        report_menu = menubar.addMenu("Отчет")
-        help_menu = menubar.addMenu("Помощь")
-        action1 = QAction("Все таблицы", self) 
-        action1.triggered.connect(lambda: self.get_table_ui("all", True)) 
-        data_menu.addAction(action1) 
-        
-        action2 = QAction("Ученые", self)
-        action2.triggered.connect(lambda: self.get_table_ui("Experts")) 
-        data_menu.addAction(action2) 
- 
-        action3 = QAction("ГРНТИ", self)
-        action3.triggered.connect(lambda: self.get_table_ui("grntirub")) 
-        data_menu.addAction(action3) 
- 
-        action4 = QAction("Регионы", self)
-        action4.triggered.connect(lambda: self.get_table_ui("Reg_obl_city")) 
-        data_menu.addAction(action4) 
-
-    def insert_data(self, data, rows, cols):
-        for row in range(rows):
-            for column in range(cols):
-                self.table.setItem(row, column, QTableWidgetItem(data[row][column]))
-
-    def get_table_ui(self, name, flag=False):
-        file = os.path.join("data", "DATABASE.db")
-        if flag:
-            tb = get_merged_table(file)
-            cols = get_merged_columns(file)
-            rows = get_merged_rows(file)
-            self.table = QTableWidget(rows, len(cols))
-            self.setCentralWidget(self.table)
-            self.insert_data(tb, rows, len(cols))
-        else:
-            tb = get_table(file, name)
-            cols = get_columns_in_table(file, name)
-            rows = get_rows_in_table(file, name)
-            self.table = QTableWidget(rows, cols)
-            self.setCentralWidget(self.table)
-            self.insert_data(tb, rows, cols)
-
-
-
-from PyQt6.QtWidgets import QMainWindow, QMenu, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, QAbstractItemView, QPushButton, QDialog, QComboBox
+from PyQt6.QtWidgets import QMainWindow, QMenu, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, QAbstractItemView, QPushButton, QDialog, QComboBox, QGroupBox, QLabel, QLineEdit, QHBoxLayout
 from PyQt6.QtGui import QPalette, QColor, QAction
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import QRect
@@ -245,11 +193,43 @@ class add_data_window(QMainWindow):
         super().__init__()
         self.setWindowTitle("Добавление новых данных")
         self.setGeometry(100, 100, 400, 300)
-        self.button = QPushButton("Закрыть", self)
-        self.button.setGeometry(QRect(150, 120, 100, 30))
+        self.groupBox = QGroupBox(self.centralwidget)
+        self.groupBox.setObjectName(u"groupBox")
+        self.groupBox.setGeometry(QRect(970, 300, 221, 251))
+        self.label = QLabel(self.groupBox)
+        self.label.setObjectName(u"label")
+        self.label.setGeometry(QRect(10, 30, 31, 21))
+        self.label_2 = QLabel(self.groupBox)
+        self.label_2.setObjectName(u"label_2")
+        self.label_2.setGeometry(QRect(7, 77, 41, 16))
+        self.label_3 = QLabel(self.groupBox)
+        self.label_3.setObjectName(u"label_3")
+        self.label_3.setGeometry(QRect(7, 114, 41, 16))
+        self.lineEdit_2 = QLineEdit(self.groupBox)
+        self.lineEdit_2.setObjectName(u"lineEdit_2")
+        self.lineEdit_2.setGeometry(QRect(7, 54, 97, 19))
+        self.lineEdit_3 = QLineEdit(self.groupBox)
+        self.lineEdit_3.setObjectName(u"lineEdit_3")
+        self.lineEdit_3.setGeometry(QRect(7, 91, 97, 19))
+        self.label_4 = QLabel(self.groupBox)
+        self.label_4.setObjectName(u"label_4")
+        self.label_4.setGeometry(QRect(7, 151, 41, 16))
+        self.lineEdit_4 = QLineEdit(self.groupBox)
+        self.lineEdit_4.setObjectName(u"lineEdit_4")
+        self.lineEdit_4.setGeometry(QRect(7, 128, 97, 19))
+        self.lineEdit_8 = QLineEdit(self.groupBox)
+        self.lineEdit_8.setObjectName(u"lineEdit_8")
+        self.lineEdit_8.setGeometry(QRect(7, 165, 97, 19))
+        self.pushButton = QPushButton(self.groupBox)
+        self.pushButton.setObjectName(u"pushButton")
+        self.pushButton.setGeometry(QRect(130, 210, 81, 21))
+        self.pushButton_2 = QPushButton(self.groupBox)
+        self.pushButton_2.setObjectName(u"pushButton_2")
+        self.pushButton_2.setGeometry(QRect(10, 210, 81, 21))
         self.dark_theme = DarkTheme() 
         self.dark_theme.apply(self)
-        self.button.clicked.connect(self.close_window)
+        self.pushButton_2.clicked.connect(self.close_window)
+        #self.pushButton.clicked.connect()
 
     def close_window(self):
         self.close()  # Закрытие окна
@@ -259,11 +239,23 @@ class del_data_window(QMainWindow):
         super().__init__()
         self.setWindowTitle("Удаление данных")
         self.setGeometry(100, 100, 400, 300)
-        self.button = QPushButton("Закрыть", self)
-        self.button.setGeometry(QRect(150, 120, 100, 30))
+        self.groupBox = QGroupBox(self.centralwidget)
+        self.groupBox.setObjectName(u"groupBox")
+        self.groupBox.setGeometry(QRect(1140, 340, 231, 71))
+        self.horizontalLayout = QHBoxLayout(self.groupBox)
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.pushButton = QPushButton(self.groupBox)
+        self.pushButton.setObjectName(u"pushButton")
+
+        self.horizontalLayout.addWidget(self.pushButton)
+
+        self.pushButton_2 = QPushButton(self.groupBox)
+        self.pushButton_2.setObjectName(u"pushButton_2")
+
+        self.horizontalLayout.addWidget(self.pushButton_2)
         self.dark_theme = DarkTheme() 
         self.dark_theme.apply(self)
-        self.button.clicked.connect(self.close_window)
+        self.pushButton_2.clicked.connect(self.close_window)
 
     def close_window(self):
         self.close()  # Закрытие окна
@@ -272,11 +264,42 @@ class ch_data_window(QMainWindow):
         super().__init__()
         self.setWindowTitle("Редактирование данных")
         self.setGeometry(100, 100, 400, 300)
-        self.button = QPushButton("Закрыть", self)
-        self.button.setGeometry(QRect(150, 120, 100, 30))
+        self.groupBox = QGroupBox(self.centralwidget)
+        self.groupBox.setObjectName(u"groupBox")
+        self.groupBox.setGeometry(QRect(350, 320, 221, 271))
+        self.label = QLabel(self.groupBox)
+        self.label.setObjectName(u"label")
+        self.label.setGeometry(QRect(10, 40, 31, 16))
+        self.label_2 = QLabel(self.groupBox)
+        self.label_2.setObjectName(u"label_2")
+        self.label_2.setGeometry(QRect(7, 77, 51, 16))
+        self.label_3 = QLabel(self.groupBox)
+        self.label_3.setObjectName(u"label_3")
+        self.label_3.setGeometry(QRect(7, 114, 51, 16))
+        self.lineEdit_2 = QLineEdit(self.groupBox)
+        self.lineEdit_2.setObjectName(u"lineEdit_2")
+        self.lineEdit_2.setGeometry(QRect(7, 54, 191, 19))
+        self.lineEdit_3 = QLineEdit(self.groupBox)
+        self.lineEdit_3.setObjectName(u"lineEdit_3")
+        self.lineEdit_3.setGeometry(QRect(7, 91, 191, 19))
+        self.label_4 = QLabel(self.groupBox)
+        self.label_4.setObjectName(u"label_4")
+        self.label_4.setGeometry(QRect(7, 151, 71, 16))
+        self.lineEdit_4 = QLineEdit(self.groupBox)
+        self.lineEdit_4.setObjectName(u"lineEdit_4")
+        self.lineEdit_4.setGeometry(QRect(7, 128, 191, 19))
+        self.lineEdit_8 = QLineEdit(self.groupBox)
+        self.lineEdit_8.setObjectName(u"lineEdit_8")
+        self.lineEdit_8.setGeometry(QRect(7, 165, 191, 21))
+        self.pushButton = QPushButton(self.groupBox)
+        self.pushButton.setObjectName(u"pushButton")
+        self.pushButton.setGeometry(QRect(130, 210, 71, 21))
+        self.pushButton_2 = QPushButton(self.groupBox)
+        self.pushButton_2.setObjectName(u"pushButton_2")
+        self.pushButton_2.setGeometry(QRect(10, 210, 111, 21))
         self.dark_theme = DarkTheme() 
         self.dark_theme.apply(self)
-        self.button.clicked.connect(self.close_window)
+        self.pushButton_2.clicked.connect(self.close_window)
 
     def close_window(self):
         self.close()  # Закрытие окна
