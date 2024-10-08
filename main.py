@@ -1,9 +1,11 @@
-from PyQt6.QtWidgets import QMainWindow, QMenu, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, QAbstractItemView, QPushButton
+from PyQt6.QtWidgets import QMainWindow, QMenu, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, QAbstractItemView, QPushButton, QDialog, QComboBox
 from PyQt6.QtGui import QPalette, QColor, QAction
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import QRect
+from PyQt6.QtCore import Qt
 import os, sys
 from sql.requests import *
+from filter_by_keyword import *
 
 class MyApp(QMainWindow): 
     def __init__(self): 
@@ -18,27 +20,48 @@ class MyApp(QMainWindow):
         self.dialogs = list()
 
     def create_context_menu(self):
-        # Создание контекстного меню
         self.context_menu = QMenu(self)
         add_data = self.context_menu.addAction("Добавить данные")
         del_data = self.context_menu.addAction("Удалить данные")
         ch_data = self.context_menu.addAction("Изменить данные")
- 
-        # Добавляем к нему функции 
+        sort_menu = self.context_menu.addMenu("Сортировка")
+        sort_asc = sort_menu.addAction("Сортировка по возрастанию")
+        sort_desc = sort_menu.addAction("Сортировка по убыванию")
+        filtr =  self.context_menu.addMenu("Фильтрация")
+        filtr.triggered.connect(self.show_filter_dialog)
         add_data.triggered.connect(self.add_data_triggered)
         del_data.triggered.connect(self.del_data_triggered)
         ch_data.triggered.connect(self.ch_data_triggered)
+        sort_asc.triggered.connect(lambda: self.sort_column(True))
+        sort_desc.triggered.connect(lambda: self.sort_column(False))
+    def show_filter_dialog(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle("Выберите ключевое слово для фильтрации")
+        layout = QVBoxLayout(dialog)
 
+        combo_box = QComboBox(dialog)
+        combo_box.addItems(["Keyword1", "Keyword2", "Keyword3"])  # Populate with actual keywords
+        layout.addWidget(combo_box)
+
+        button = QPushButton("Фильтровать", dialog)
+        button.clicked.connect(lambda: self.filter_data(combo_box.currentText()))
+        layout.addWidget(button)
+
+        dialog.setLayout(layout)
+        dialog.exec()
+    def filter_data(self, keyword):
+        filtered_data = filter_merged_table_by_keyword(keyword)
+    
     def create_menu(self): 
         menubar = self.menuBar() 
         menubar.setStyleSheet("QMenuBar { background-color: rgb(53, 53, 53); color: white; }"
                                "QMenu { background-color: rgb(53, 53, 53); color: white; }"
                                "QMenu::item:selected { background-color: rgb(42, 130, 218); }")
         data_menu = menubar.addMenu("Данные")
+
         groups_menu = menubar.addMenu("Группы")
         report_menu = menubar.addMenu("Отчет")
         help_menu = menubar.addMenu("Помощь")
-        
         action1 = QAction("Все таблицы", self) 
         action1.triggered.connect(lambda: self.get_table_ui("all", True)) 
         data_menu.addAction(action1) 
@@ -74,8 +97,22 @@ class MyApp(QMainWindow):
         self.table.verticalHeader().setStyleSheet("QHeaderView::section { background-color: rgb(53, 53, 53); color: white; }")
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        #self.setCentralWidget(self.table)
+        for i in range(cols):
+            self.adjust_column_width(i)
         self.setCentralWidget(self.table)
+
+    def sort_column(self, ascending):
+        index = self.table.currentColumn()
+        self.table.sortItems(index, Qt.SortOrder.AscendingOrder if ascending else Qt.SortOrder.DescendingOrder)
+
+    def adjust_column_width(self, column):
+        max_length = 0
+        for row in range(self.table.rowCount()):
+            item = self.table.item(row, column)
+            if item is not None:
+                max_length = max(max_length, len(item.text()))
+        self.table.setColumnWidth(column, max_length*8)  # Adjust multiplier as needed
+
 
     def contextMenuEvent(self, event):
         # Show the context menu
