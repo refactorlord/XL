@@ -90,7 +90,7 @@ def get_merged_columns(file):
         # Construct the list of column names
         column_names = ['Код', 'ФИО', 'Код "GRNTI"', 'Рубрика', 'Регион', 'Область', 'Город', 'Дата ввода']
 
-        return column_names
+        return len(column_names)
     except Exception as ex:
         print(f"Error while working with the database: {ex}")
         return None
