@@ -25,3 +25,5 @@ def converter():
     folder_path = 'data'
     db_file = os.path.join(folder_path, 'DATABASE.db')
     convert_all(folder_path, db_file)
+
+#converter()

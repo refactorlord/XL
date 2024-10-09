@@ -1,4 +1,4 @@
-from qt.main import *
+from qt.qtmain import *
 
 def main():
     #set_cell_value("data\\DATABASE.db", "grntirub", 80, "codrub", 121212)
