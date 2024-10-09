@@ -294,21 +294,23 @@ class EditDataWindow(QMainWindow):
         self.table_name = table_name
         self.row_number = row_number  # Используем 1-based индекс
         self.setWindowTitle("Редактирование данных")
-        self.setGeometry(100, 100, 400, 300)
+        self.setGeometry(100, 100, 400, 400)
 
         self.groupBox = QGroupBox(self)
-        self.groupBox.setGeometry(10, 10, 380, 280)
+        self.groupBox.setGeometry(10, 10, 380, 350)  # Уменьшили высоту группы
 
         self.fields = {}
 
         self.create_input_fields()
 
+        # Кнопка для сохранения изменений
         self.pushButton = QPushButton("Сохранить", self.groupBox)
-        self.pushButton.setGeometry(130, 210, 81, 21)
+        self.pushButton.setGeometry(130, 310, 81, 21)  # Отступ сверху
         self.pushButton.clicked.connect(self.save_data)
 
+        # Кнопка для закрытия окна
         self.pushButton_2 = QPushButton("Закрыть", self.groupBox)
-        self.pushButton_2.setGeometry(10, 210, 81, 21)
+        self.pushButton_2.setGeometry(10, 310, 81, 21)  # Отступ сверху
         self.pushButton_2.clicked.connect(self.close)
 
         self.dark_theme = DarkTheme()
@@ -323,9 +325,7 @@ class EditDataWindow(QMainWindow):
 
             line_edit = QLineEdit(self.groupBox)
             line_edit.setGeometry(120, 30 + index * 30, 200, 20)
-
-            # Устанавливаем стиль для QLineEdit (черный текст на белом фоне)
-            line_edit.setStyleSheet("QLineEdit { color: black; background-color: white; }")
+            line_edit.setStyleSheet("QLineEdit { background-color: rgb(35, 35, 35); color: rgb(255, 255, 255); }")  # Темный фон и белый текст
 
             # Получаем текущее значение
             current_value = get_cell_value(os.path.join("data", "DATABASE.db"), self.table_name, self.row_number, column_name)
@@ -347,6 +347,7 @@ class EditDataWindow(QMainWindow):
 
         # Закрытие окна
         self.close()
+
 
 
 class del_data_window(QMainWindow):
