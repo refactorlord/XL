@@ -154,10 +154,15 @@ class MyApp(QMainWindow):
         self.filter_data_window.show()
     
     def refresh_table(self):
-        tableName = "Experts"
-        # Assuming you're currently viewing the merged table or some specific table
-        current_table_name = tableName  # Replace with the actual current table name
-        self.get_table_ui(current_table_name)
+        file = os.path.join("data", "DATABASE.db")
+        tb = get_table(file, "Experts")
+        cols = get_columns_in_table(file, "Experts")
+        rows = len(tb)
+        self.table.setRowCount(rows)
+        self.table.setColumnCount(cols)
+        self.insert_data(tb, rows, cols)
+        for i in range(cols):
+            self.adjust_column_width(i)
     
     def add_data_triggered(self):
         self.add_data_dialog = add_data_window(self)  # Передаем экземпляр MyApp
