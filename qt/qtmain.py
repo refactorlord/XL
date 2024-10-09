@@ -192,21 +192,27 @@ class add_data_window(QMainWindow):
         self.parent = parent  # Ссылка на экземпляр MyApp
         self.table_name = table_name
         self.setWindowTitle("Добавление новых данных")
-        self.setGeometry(100, 100, 400, 300)
+        self.setGeometry(100, 100, 400, 400)
+
+        # Применение темной темы
+        self.dark_theme = DarkTheme()
+        self.dark_theme.apply(self)
 
         self.groupBox = QGroupBox(self)
-        self.groupBox.setGeometry(10, 10, 380, 280)
+        self.groupBox.setGeometry(10, 10, 380, 360)
 
         self.fields = {}  # Словарь для хранения полей ввода
 
         self.create_input_fields()  # Создаем поля ввода
 
+        # Кнопка для добавления данных
         self.pushButton = QPushButton("Добавить", self.groupBox)
-        self.pushButton.setGeometry(130, 210, 81, 21)
+        self.pushButton.setGeometry(130, 310, 81, 21)
         self.pushButton.clicked.connect(self.add_data)
 
+        # Кнопка для закрытия окна
         self.pushButton_2 = QPushButton("Закрыть", self.groupBox)
-        self.pushButton_2.setGeometry(10, 210, 81, 21)
+        self.pushButton_2.setGeometry(10, 310, 81, 21)
         self.pushButton_2.clicked.connect(self.close)
 
     def create_input_fields(self):
@@ -219,6 +225,7 @@ class add_data_window(QMainWindow):
 
             line_edit = QLineEdit(self.groupBox)
             line_edit.setGeometry(120, 30 + index * 30, 200, 20)
+            line_edit.setStyleSheet("QLineEdit { background-color: rgb(35, 35, 35); color: rgb(255, 255, 255); }")  # Темный фон и белый текст
             self.fields[column_name] = line_edit  # Сохраняем поле ввода в словарь
 
     def add_data(self):
@@ -244,9 +251,8 @@ class add_data_window(QMainWindow):
     def clear_fields(self):
         for line_edit in self.fields.values():
             line_edit.clear()
-
-
-
+            
+            
 class filter_data_window(QMainWindow):
     def __init__(self):
         super().__init__()
