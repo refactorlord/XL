@@ -12,18 +12,21 @@ def add_row_to_table(file: str, table_name: str, data: list) -> None:
     try:
         connection = connect_db(file)
         cursor = connection.cursor()
+        
+        # Get column names
+        cursor.execute(f"PRAGMA table_info({table_name})")
+        column_names = [column[1] for column in cursor.fetchall()]
+        
+        # Form and execute the query
+        query = f"INSERT INTO {table_name} ({', '.join(column_names)}) VALUES ({', '.join(['?'] * len(column_names))})"
+        cursor.execute(query, data)
+        
+        connection.commit()
+        print("Data added successfully!")  # Debug message
     except Exception as ex:
-        print(f"Error while connecting to database: {ex}")
-        return None
-    cursor.execute(f"PRAGMA table_info({table_name})")
-    column_names = [column[1] for column in cursor.fetchall()]
-
-    query = f"INSERT INTO {table_name} ({', '.join(column_names)}) VALUES ({', '.join(['?'] * len(column_names))})"
-
-    cursor.execute(query, data)
-
-    connection.commit()
-    connection.close()
+        print(f"Error adding data: {ex}")
+    finally:
+        connection.close()
 
 def delete_row_by_number(file: str, table_name: str, row_number: int) -> None:
     """

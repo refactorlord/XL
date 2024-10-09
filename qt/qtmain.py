@@ -152,7 +152,17 @@ class MyApp(QMainWindow):
     def filter_data_triggered(self):
         self.filter_data_window = filter_data_window()
         self.filter_data_window.show()
-        
+    
+    def refresh_table(self):
+        tableName = "Experts"
+        # Assuming you're currently viewing the merged table or some specific table
+        current_table_name = tableName  # Replace with the actual current table name
+        self.get_table_ui(current_table_name)
+    
+    def add_data_triggered(self):
+        self.add_data_dialog = add_data_window(self)  # Передаем экземпляр MyApp
+        self.add_data_dialog.show()
+
 class DarkTheme:
     def __init__(self):
         self.palette = QPalette()
@@ -177,71 +187,78 @@ class DarkTheme:
         widget.setPalette(self.palette)
         
 class add_data_window(QMainWindow):
-    def __init__(self):
+    def __init__(self, app_instance):
         super().__init__()
+        self.app_instance = app_instance  # Сохраняем ссылку на экземпляр MyApp
         self.setWindowTitle("Добавление новых данных")
         self.setGeometry(100, 100, 400, 300)
+
+        # Создание элементов интерфейса
         self.groupBox = QGroupBox(self)
         self.groupBox.setObjectName(u"groupBox")
         self.groupBox.setGeometry(QRect(10, 10, 380, 280))
-        self.label = QLabel(self.groupBox)
-        self.label.setObjectName(u"label")
-        self.label.setGeometry(QRect(10, 30, 31, 21))
-        self.label_2 = QLabel(self.groupBox)
-        self.label_2.setObjectName(u"label_2")
-        self.label.setText("ФИО")
-        self.label_2.setGeometry(QRect(7, 77, 41, 16))
-        self.label_2.setText("Город")
-        self.label_3 = QLabel(self.groupBox)
-        self.label_3.setObjectName(u"label_3")
-        self.label_3.setGeometry(QRect(7, 114, 41, 16))
-        self.label_3.setText("Регион")
-        self.lineEdit_2 = QLineEdit(self.groupBox)
-        self.lineEdit_2.setObjectName(u"lineEdit_2")
-        self.lineEdit_2.setGeometry(QRect(7, 54, 97, 19))
-        self.lineEdit_3 = QLineEdit(self.groupBox)
-        self.lineEdit_3.setObjectName(u"lineEdit_3")
-        self.lineEdit_3.setGeometry(QRect(7, 91, 97, 19))
-        self.label_4 = QLabel(self.groupBox)
-        self.label_4.setObjectName(u"label_4")
-        self.label_4.setGeometry(QRect(7, 151, 41, 16))
-        self.label_4.setText("ГРНТИ")
-        self.lineEdit_4 = QLineEdit(self.groupBox)
-        self.lineEdit_4.setObjectName(u"lineEdit_4")
-        self.lineEdit_4.setGeometry(QRect(7, 128, 97, 19))
-        self.lineEdit_8 = QLineEdit(self.groupBox)
-        self.lineEdit_8.setObjectName(u"lineEdit_8")
-        self.lineEdit_8.setGeometry(QRect(7, 165, 97, 19))
-        self.pushButton = QPushButton(self.groupBox)
-        self.pushButton.setObjectName(u"pushButton")
-        self.pushButton.setGeometry(QRect(130, 210, 81, 21))
-        self.pushButton_2 = QPushButton(self.groupBox)
-        self.pushButton_2.setObjectName(u"pushButton_2")
-        self.pushButton_2.setGeometry(QRect(10, 210, 81, 21))
-        self.pushButton_2.setText("Закрыть")
-        self.pushButton.setText("Добавить")
-        self.dark_theme = DarkTheme() 
-        self.dark_theme.apply(self)
-        self.pushButton.clicked.connect(self.add_data)
+
+        # Поля ввода
+        self.label = QLabel("ФИО", self.groupBox)
+        self.label.setGeometry(QRect(10, 30, 100, 20))  # Задайте размер и положение
+        self.lineEdit_fio = QLineEdit(self.groupBox)
+        self.lineEdit_fio.setGeometry(QRect(120, 30, 250, 20))
+
+        self.label_2 = QLabel("Город", self.groupBox)
+        self.label_2.setGeometry(QRect(10, 70, 100, 20))
+        self.lineEdit_city = QLineEdit(self.groupBox)
+        self.lineEdit_city.setGeometry(QRect(120, 70, 250, 20))
+
+        self.label_3 = QLabel("Регион", self.groupBox)
+        self.label_3.setGeometry(QRect(10, 110, 100, 20))
+        self.lineEdit_region = QLineEdit(self.groupBox)
+        self.lineEdit_region.setGeometry(QRect(120, 110, 250, 20))
+
+        self.label_4 = QLabel("ГРНТИ", self.groupBox)
+        self.label_4.setGeometry(QRect(10, 150, 100, 20))
+        self.lineEdit_grnti = QLineEdit(self.groupBox)
+        self.lineEdit_grnti.setGeometry(QRect(120, 150, 250, 20))
+
+        # Кнопки
+        self.pushButton = QPushButton("Добавить", self.groupBox)
+        self.pushButton.setGeometry(QRect(120, 210, 100, 30))
+        self.pushButton.clicked.connect(self.add_data)  # Подключаем функцию добавления
+
+        self.pushButton_2 = QPushButton("Закрыть", self.groupBox)
+        self.pushButton_2.setGeometry(QRect(230, 210, 100, 30))
         self.pushButton_2.clicked.connect(self.close_window)
 
-    def add_data(self, tableName="Experts"):
-        try:
-            adding_data = [self.lineEdit_2.text(), self.lineEdit_3.text(), self.lineEdit_4.text(), self.lineEdit_8.text()]
-            if any(not item for item in adding_data):
-                raise ValueError("All fields must be filled")
-            add_row_to_table("data/DATABASE.db", tableName, adding_data)
-        except AttributeError as e:
-            print(f"Attribute error: {e}")
-        except ValueError as e:
-            print(f"Value error: {e}")
-        except sqlite3.Error as e:
-            print(f"SQLite error: {e}")
-        except Exception as e:
-            print(f"Error: {e}")
+        # Применяем темную тему
+        self.dark_theme = DarkTheme() 
+        self.dark_theme.apply(self)
+
+    def add_data(self):
+        # Соберите данные из полей ввода
+        data = [
+            self.lineEdit_fio.text(),
+            self.lineEdit_city.text(),
+            self.lineEdit_region.text(),
+            self.lineEdit_grnti.text(),
+            " ",  # Для других столбцов
+            " ",
+            " ",
+            " "
+        ]
+
+        # Добавьте строку в базу данных
+        file = os.path.join("data", "DATABASE.db")
+        table_name = "Experts"  # Замените на актуальное имя таблицы
+        add_row_to_table(file, table_name, data)
+        
+        # Обновите основную таблицу в MyApp
+        self.app_instance.refresh_table()
+        
+        self.close()
 
     def close_window(self):
-        self.close()  
+        self.close()
+
+
 
 class filter_data_window(QMainWindow):
     def __init__(self):
