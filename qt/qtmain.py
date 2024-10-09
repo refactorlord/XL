@@ -138,8 +138,16 @@ class MyApp(QMainWindow):
         self.del_data_window.show()
         
     def ch_data_triggered(self):
-        self.ch_data_window = ch_data_window()
-        self.ch_data_window.show()
+        selected_row = self.table.currentRow()  # Получаем номер выбранной строки
+        if selected_row >= 0:  # Проверяем, что строка выбрана
+            # Получаем имя текущей таблицы
+            current_table_name = self.get_current_table_name()
+            # Создаем окно редактирования
+            self.ch_data_window = EditDataWindow(self, current_table_name, selected_row)  # Передаем номер строки (SQLite использует 1-based indexing)
+            self.ch_data_window.show()
+        else:
+            QMessageBox.warning(self, "Ошибка", "Пожалуйста, выберите строку для редактирования.")
+
     def filter_data_triggered(self):
         self.filter_data_window = filter_data_window()
         self.filter_data_window.show()
@@ -278,6 +286,67 @@ class filter_data_window(QMainWindow):
         self.pushButton_2.clicked.connect(self.close_window)
     def close_window(self):
         self.close()  
+
+class EditDataWindow(QMainWindow):
+    def __init__(self, parent, table_name, row_number):
+        super().__init__()
+        self.parent = parent
+        self.table_name = table_name
+        self.row_number = row_number  # Используем 1-based индекс
+        self.setWindowTitle("Редактирование данных")
+        self.setGeometry(100, 100, 400, 300)
+
+        self.groupBox = QGroupBox(self)
+        self.groupBox.setGeometry(10, 10, 380, 280)
+
+        self.fields = {}
+
+        self.create_input_fields()
+
+        self.pushButton = QPushButton("Сохранить", self.groupBox)
+        self.pushButton.setGeometry(130, 210, 81, 21)
+        self.pushButton.clicked.connect(self.save_data)
+
+        self.pushButton_2 = QPushButton("Закрыть", self.groupBox)
+        self.pushButton_2.setGeometry(10, 210, 81, 21)
+        self.pushButton_2.clicked.connect(self.close)
+
+        self.dark_theme = DarkTheme()
+        self.dark_theme.apply(self)
+
+    def create_input_fields(self):
+        column_names = get_columns_in_table(os.path.join("data", "DATABASE.db"), self.table_name)
+
+        for index, column_name in enumerate(column_names):
+            label = QLabel(column_name, self.groupBox)
+            label.setGeometry(10, 30 + index * 30, 100, 20)
+
+            line_edit = QLineEdit(self.groupBox)
+            line_edit.setGeometry(120, 30 + index * 30, 200, 20)
+
+            # Устанавливаем стиль для QLineEdit (черный текст на белом фоне)
+            line_edit.setStyleSheet("QLineEdit { color: black; background-color: white; }")
+
+            # Получаем текущее значение
+            current_value = get_cell_value(os.path.join("data", "DATABASE.db"), self.table_name, self.row_number, column_name)
+
+            # Убедитесь, что current_value является строкой
+            line_edit.setText(str(current_value) if current_value is not None else '')
+
+            self.fields[column_name] = line_edit  # Сохраняем поле ввода в словарь
+
+    def save_data(self):
+        # Сбор данных из полей ввода
+        data = [self.fields[column_name].text() for column_name in self.fields]
+
+        # Обновление строки в таблице
+        update_row_in_table(os.path.join("data", "DATABASE.db"), self.table_name, self.row_number, data)
+
+        # Обновление таблицы в основном окне
+        self.parent.refresh_table()
+
+        # Закрытие окна
+        self.close()
 
 
 class del_data_window(QMainWindow):

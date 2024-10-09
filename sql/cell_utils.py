@@ -1,42 +1,59 @@
 from sql.get_utils import *
 
-def get_cell_value(file, name, i, j):
-    table = get_table(file, name)
-    rows = get_rows_in_table(file, name)
-    cols = get_columns_in_table(file, name)
-    if 0 <= i < rows and 0 <= j < cols:
-        return table[i][j]
-    else:
-        raise IndexError("Индексы выходят за пределы таблицы")
-    
-def set_cell_value(file, table_name, row_number, column, value):
+def get_cell_value(file: str, table_name: str, row_number: int, column_name: str):
     """
-    Sets a cell value in the SQLite table by row number.
+    Gets a cell value from the SQLite table by row number and column name.
 
     :param file: Path to the database file.
     :param table_name: Table name.
     :param row_number: Row number (starts from 1).
-    :param column: Column name.
-    :param value: New cell value.
+    :param column_name: Column name.
+    :return: Value of the cell.
     """
     try:
         # Connect to the database
-        connection = connect_db(file)
+        connection = sqlite3.connect(file)
         cursor = connection.cursor()
 
-        # Construct the SQL query using ROWID
-        query = f"UPDATE \"{table_name}\" SET \"{column}\" = ? WHERE ROWID = ?"
+        # Construct the SQL query to get the cell value
+        query = f"SELECT \"{column_name}\" FROM \"{table_name}\" WHERE ROWID = ?"
         
         # Execute the query
-        cursor.execute(query, (value, row_number))
+        cursor.execute(query, (row_number,))
+        result = cursor.fetchone()
         
-        # Save changes
-        connection.commit()
-        print("Value updated successfully!")
-        
+        if result is not None:
+            return result[0]  # Возвращаем значение ячейки
+        else:
+            return None  # Если значение не найдено
+
     except sqlite3.Error as e:
         print(f"Error while working with SQLite: {e}")
-        
+        return None  # В случае ошибки возвращаем None
+
+    finally:
+        if connection:
+            connection.close()
+
+def update_row_in_table(file: str, table_name: str, row_number: int, data: list):
+    try:
+        connection = sqlite3.connect(file)
+        cursor = connection.cursor()
+
+        # Получаем имена столбцов
+        column_names = get_columns_in_table(file, table_name)
+
+        # Формируем SQL запрос для обновления строки
+        set_clause = ', '.join([f'"{column_name}" = ?' for column_name in column_names])
+        query = f"UPDATE \"{table_name}\" SET {set_clause} WHERE ROWID = ?"
+
+        # Выполняем запрос
+        cursor.execute(query, (*data, row_number))
+        connection.commit()
+
+    except sqlite3.Error as e:
+        print(f"Error while updating row: {e}")
+
     finally:
         if connection:
             connection.close()
