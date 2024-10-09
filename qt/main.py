@@ -48,28 +48,14 @@ class MyApp(QMainWindow):
         sort_menu = self.context_menu.addMenu("Сортировка")
         sort_asc = sort_menu.addAction("Сортировка по возрастанию")
         sort_desc = sort_menu.addAction("Сортировка по убыванию")
-        filtr =  self.context_menu.addMenu("Фильтрация")
-        filtr.triggered.connect(self.show_filter_dialog)
+        filtr =  self.context_menu.addAction("Фильтрация")
+        filtr.triggered.connect(self.filter_data_triggered)
         add_data.triggered.connect(self.add_data_triggered)
         del_data.triggered.connect(self.del_data_triggered)
         ch_data.triggered.connect(self.ch_data_triggered)
         sort_asc.triggered.connect(lambda: self.sort_column(True))
         sort_desc.triggered.connect(lambda: self.sort_column(False))
-    def show_filter_dialog(self):
-        dialog = QDialog(self)
-        dialog.setWindowTitle("Выберите ключевое слово для фильтрации")
-        layout = QVBoxLayout(dialog)
 
-        combo_box = QComboBox(dialog)
-        combo_box.addItems(["Keyword1", "Keyword2", "Keyword3"])  # Populate with actual keywords
-        layout.addWidget(combo_box)
-
-        button = QPushButton("Фильтровать", dialog)
-        button.clicked.connect(lambda: self.filter_data(combo_box.currentText()))
-        layout.addWidget(button)
-
-        dialog.setLayout(layout)
-        dialog.exec()
     def filter_data(self, keyword):
         filtered_data = filter_merged_table_by_keyword(keyword)
     
@@ -163,6 +149,9 @@ class MyApp(QMainWindow):
     def ch_data_triggered(self):
         self.ch_data_window = ch_data_window()
         self.ch_data_window.show()
+    def filter_data_triggered(self):
+        self.filter_data_window = filter_data_window()
+        self.filter_data_window.show()
         
 class DarkTheme:
     def __init__(self):
@@ -229,6 +218,32 @@ class add_data_window(QMainWindow):
         self.dark_theme.apply(self)
         self.pushButton_2.clicked.connect(self.close_window)
 
+    def close_window(self):
+        self.close()  
+
+class filter_data_window(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Фильтрация данных")
+        self.setGeometry(100, 100, 400, 300)
+        self.groupBox = QGroupBox(self)
+        self.groupBox.setObjectName(u"groupBox")
+        self.groupBox.setGeometry(QRect(10, 10, 380, 280))
+        self.label = QLabel(self.groupBox)
+        self.label.setObjectName(u"label")
+        self.label.setGeometry(QRect(10, 30, 31, 21))
+        self.pushButton = QPushButton(self.groupBox)
+        self.pushButton.setObjectName(u"pushButton")
+        self.pushButton.setGeometry(QRect(130, 210, 81, 21))
+        self.pushButton_2 = QPushButton(self.groupBox)
+        self.pushButton_2.setObjectName(u"pushButton_2")
+        self.pushButton_2.setGeometry(QRect(10, 210, 81, 21))
+        self.lineEdit_2 = QLineEdit(self.groupBox)
+        self.lineEdit_2.setObjectName(u"lineEdit_2")
+        self.lineEdit_2.setGeometry(QRect(7, 54, 97, 19))
+        self.dark_theme = DarkTheme() 
+        self.dark_theme.apply(self)
+        self.pushButton_2.clicked.connect(self.close_window)
     def close_window(self):
         self.close()  
 
