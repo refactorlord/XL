@@ -1,36 +1,24 @@
 import os
 import sys
-from PySide6.QtCore import QRect
-from PyQt6.QtWidgets import QApplication, QMainWindow, QMessageBox, QTableWidget, QWidget, QTableWidgetItem
-from PyQt6.QtGui import QAction
-from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
-    QMetaObject, QObject, QPoint, QRect,
-    QSize, QTime, QUrl, Qt)
-from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
-    QCursor, QFont, QFontDatabase, QGradient,
-    QIcon, QImage, QKeySequence, QLinearGradient,
-    QPainter, QPalette, QPixmap, QRadialGradient,
-    QTransform)
-from PySide6.QtWidgets import (QApplication, QHeaderView, QMainWindow, QMenu,
-    QMenuBar, QSizePolicy, QStatusBar, QTableWidget,
-    QTableWidgetItem, QWidget)
-
+from PySide6.QtCore import QRect, Qt
+from PySide6.QtWidgets import (
+    QApplication, QMainWindow, QMessageBox, QTableWidget, 
+    QTableWidgetItem, QWidget, QHeaderView, QMenu, 
+    QMenuBar, QSizePolicy, QStatusBar, QAbstractItemView, 
+    QPushButton, QDialog, QComboBox, QLineEdit, 
+    QGroupBox, QLabel, QHBoxLayout, QVBoxLayout
+)
+from PySide6.QtGui import QPalette, QColor, QAction
+from filter_by_keyword import *
 from sql.cell_utils import *
 from sql.edit_utils import *
 from sql.get_utils import *
 from sql.get_merged_utils import *
 
-from PyQt6.QtWidgets import QMainWindow, QMenu, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, QAbstractItemView, QPushButton, QDialog, QComboBox, QLineEdit, QGroupBox, QLabel, QHBoxLayout
-from PyQt6.QtGui import QPalette, QColor, QAction
-from PyQt6.QtWidgets import QApplication
-from PyQt6.QtCore import QRect
-from PyQt6.QtCore import Qt
-import os, sys
-from filter_by_keyword import *
-
 class MyApp(QMainWindow): 
     def __init__(self): 
         super().__init__()
+        self.current_table_name = None
         self.setWindowTitle("Управление организацией экспертизы научно-технических проектов") 
         self.setGeometry(100, 100, 800, 600) 
         self.dark_theme = DarkTheme() 
@@ -102,13 +90,14 @@ class MyApp(QMainWindow):
             self.insert_data(tb, rows, cols)
         else:
             tb = get_table(file, name)
-            cols = get_columns_in_table(file, name)
-            rows = get_rows_in_table(file, name)
+            cols = get_columns_count_in_table(file, name)
+            rows = get_rows_count_in_table(file, name)
             self.table = QTableWidget(rows, cols)
             self.table.setColumnCount(cols)
             self.table.setRowCount(rows)
             self.insert_data(tb, rows, cols)
-        
+
+        self.current_table_name = name
         self.dark_theme = DarkTheme() 
         self.dark_theme.apply(self)
         self.table.horizontalHeader().setStyleSheet("QHeaderView::section { background-color: rgb(53, 53, 53); color: white; }")
@@ -118,6 +107,9 @@ class MyApp(QMainWindow):
         for i in range(cols):
             self.adjust_column_width(i)
         self.setCentralWidget(self.table)
+
+    def get_current_table_name(self):
+        return self.current_table_name
 
     def sort_column(self, ascending):
         index = self.table.currentColumn()
@@ -137,10 +129,9 @@ class MyApp(QMainWindow):
         self.context_menu.exec(event.globalPos())
  
     def add_data_triggered(self):
-        
-        self.add_data_dialog = add_data_window()  # Создаем экземпляр окна
-        
-        self.add_data_dialog.show()  # Показываем окно
+        current_table_name = "Experts"  # Replace with the logic to get the current table name
+        self.add_data_dialog = add_data_window(self, current_table_name)  # Pass table name
+        self.add_data_dialog.show()  # Show the dialog
         
     def del_data_triggered(self):
         self.del_data_window = del_data_window()
@@ -155,8 +146,8 @@ class MyApp(QMainWindow):
     
     def refresh_table(self):
         file = os.path.join("data", "DATABASE.db")
-        tb = get_table(file, "Experts")
-        cols = get_columns_in_table(file, "Experts")
+        tb = get_table(file, self.get_current_table_name())
+        cols = get_columns_count_in_table(file, self.get_current_table_name())
         rows = len(tb)
         self.table.setRowCount(rows)
         self.table.setColumnCount(cols)
@@ -165,8 +156,12 @@ class MyApp(QMainWindow):
             self.adjust_column_width(i)
     
     def add_data_triggered(self):
-        self.add_data_dialog = add_data_window(self)  # Передаем экземпляр MyApp
-        self.add_data_dialog.show()
+        # Get the current table name, you may need to adjust this line
+        current_table_name = self.get_current_table_name()  # Implement this method as needed
+
+        # Create the add_data_window and pass the current table name
+        self.add_data_dialog = add_data_window(self, current_table_name)
+        self.add_data_dialog.show()  # Show the dialog
 
 class DarkTheme:
     def __init__(self):
@@ -192,76 +187,63 @@ class DarkTheme:
         widget.setPalette(self.palette)
         
 class add_data_window(QMainWindow):
-    def __init__(self, app_instance):
+    def __init__(self, parent, table_name):
         super().__init__()
-        self.app_instance = app_instance  # Сохраняем ссылку на экземпляр MyApp
+        self.parent = parent  # Ссылка на экземпляр MyApp
+        self.table_name = table_name
         self.setWindowTitle("Добавление новых данных")
         self.setGeometry(100, 100, 400, 300)
 
-        # Создание элементов интерфейса
         self.groupBox = QGroupBox(self)
-        self.groupBox.setObjectName(u"groupBox")
-        self.groupBox.setGeometry(QRect(10, 10, 380, 280))
+        self.groupBox.setGeometry(10, 10, 380, 280)
 
-        # Поля ввода
-        self.label = QLabel("ФИО", self.groupBox)
-        self.label.setGeometry(QRect(10, 30, 100, 20))  # Задайте размер и положение
-        self.lineEdit_fio = QLineEdit(self.groupBox)
-        self.lineEdit_fio.setGeometry(QRect(120, 30, 250, 20))
+        self.fields = {}  # Словарь для хранения полей ввода
 
-        self.label_2 = QLabel("Город", self.groupBox)
-        self.label_2.setGeometry(QRect(10, 70, 100, 20))
-        self.lineEdit_city = QLineEdit(self.groupBox)
-        self.lineEdit_city.setGeometry(QRect(120, 70, 250, 20))
+        self.create_input_fields()  # Создаем поля ввода
 
-        self.label_3 = QLabel("Регион", self.groupBox)
-        self.label_3.setGeometry(QRect(10, 110, 100, 20))
-        self.lineEdit_region = QLineEdit(self.groupBox)
-        self.lineEdit_region.setGeometry(QRect(120, 110, 250, 20))
-
-        self.label_4 = QLabel("ГРНТИ", self.groupBox)
-        self.label_4.setGeometry(QRect(10, 150, 100, 20))
-        self.lineEdit_grnti = QLineEdit(self.groupBox)
-        self.lineEdit_grnti.setGeometry(QRect(120, 150, 250, 20))
-
-        # Кнопки
         self.pushButton = QPushButton("Добавить", self.groupBox)
-        self.pushButton.setGeometry(QRect(120, 210, 100, 30))
-        self.pushButton.clicked.connect(self.add_data)  # Подключаем функцию добавления
+        self.pushButton.setGeometry(130, 210, 81, 21)
+        self.pushButton.clicked.connect(self.add_data)
 
         self.pushButton_2 = QPushButton("Закрыть", self.groupBox)
-        self.pushButton_2.setGeometry(QRect(230, 210, 100, 30))
-        self.pushButton_2.clicked.connect(self.close_window)
+        self.pushButton_2.setGeometry(10, 210, 81, 21)
+        self.pushButton_2.clicked.connect(self.close)
 
-        # Применяем темную тему
-        self.dark_theme = DarkTheme() 
-        self.dark_theme.apply(self)
+    def create_input_fields(self):
+        # Получаем имена столбцов для текущей таблицы
+        column_names = get_columns_in_table(os.path.join("data", "DATABASE.db"), self.table_name)
+
+        for index, column_name in enumerate(column_names):
+            label = QLabel(column_name, self.groupBox)
+            label.setGeometry(10, 30 + index * 30, 100, 20)
+
+            line_edit = QLineEdit(self.groupBox)
+            line_edit.setGeometry(120, 30 + index * 30, 200, 20)
+            self.fields[column_name] = line_edit  # Сохраняем поле ввода в словарь
 
     def add_data(self):
-        # Соберите данные из полей ввода
-        data = [
-            self.lineEdit_fio.text(),
-            self.lineEdit_city.text(),
-            self.lineEdit_region.text(),
-            self.lineEdit_grnti.text(),
-            " ",  # Для других столбцов
-            " ",
-            " ",
-            " "
-        ]
+        # Сбор данных из динамически созданных полей ввода
+        data = []
+        for column_name in get_columns_in_table(os.path.join("data", "DATABASE.db"), self.table_name):
+            value = self.fields[column_name].text()
+            data.append(value)
 
-        # Добавьте строку в базу данных
+        # Вызов функции для добавления строки в базу данных
         file = os.path.join("data", "DATABASE.db")
-        table_name = "Experts"  # Замените на актуальное имя таблицы
-        add_row_to_table(file, table_name, data)
-        
-        # Обновите основную таблицу в MyApp
-        self.app_instance.refresh_table()
-        
-        self.close()
+        add_row_to_table(file, self.table_name, data)
 
-    def close_window(self):
-        self.close()
+        # Показываем сообщение об успешном добавлении
+        QMessageBox.information(self, "Успех", "Данные успешно добавлены!")
+
+        # Очищаем поля ввода после добавления
+        self.clear_fields()
+
+        # Обновляем основную таблицу, чтобы отобразить новые данные
+        self.parent.refresh_table()
+
+    def clear_fields(self):
+        for line_edit in self.fields.values():
+            line_edit.clear()
 
 
 

@@ -34,7 +34,7 @@ def get_table(file, table_name):
         print(f"Error while working with the database: {ex}")
         return None
 
-def get_rows_in_table(file: str, table_name: str) -> int:
+def get_rows_count_in_table(file: str, table_name: str) -> int:
     """
     Returns the number of rows in the specified table in the SQLite database file.
 
@@ -58,7 +58,7 @@ def get_rows_in_table(file: str, table_name: str) -> int:
     return rows
 
 
-def get_columns_in_table(file: str, table_name: str) -> int:
+def get_columns_count_in_table(file: str, table_name: str) -> int:
     """
     Returns the number of columns in the specified table in the SQLite database file.
 
@@ -80,3 +80,33 @@ def get_columns_in_table(file: str, table_name: str) -> int:
     connection.close()
 
     return columns
+
+def get_columns_in_table(file: str, table_name: str):
+    """
+    Returns the column names for the specified table in the SQLite database file.
+
+    Args:
+        file (str): path to the SQLite database file
+        table_name (str): name of the table
+
+    Returns:
+        List[str]: list of column names
+    """
+    try:
+        connection = connect_db(file)
+        cursor = connection.cursor()
+
+        # Execute the query to fetch the column information
+        cursor.execute(f"PRAGMA table_info({table_name})")
+
+        # Fetch the column information
+        columns = [column[1] for column in cursor.fetchall()]
+
+        # Close the connection
+        connection.close()
+
+        # Return the column names
+        return columns
+    except Exception as ex:
+        print(f"Error while fetching columns: {ex}")
+        return []

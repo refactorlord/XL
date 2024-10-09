@@ -1,4 +1,4 @@
-from sql.get_utils import connect_db, get_rows_in_table
+from sql.get_utils import connect_db, get_rows_count_in_table
 
 def add_row_to_table(file: str, table_name: str, data: list) -> None:
     """
@@ -46,7 +46,7 @@ def delete_row_by_number(file: str, table_name: str, row_number: int) -> None:
         cursor = connection.cursor()
 
         # Get the total number of rows in the table
-        total_rows = get_rows_in_table(file, table_name)
+        total_rows = get_rows_count_in_table(file, table_name)
 
         # Check if the row number is valid
         if row_number < 1 or row_number > total_rows:
