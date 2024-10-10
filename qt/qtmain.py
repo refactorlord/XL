@@ -44,8 +44,6 @@ class MyApp(QMainWindow):
         sort_asc.triggered.connect(lambda: self.sort_column(True))
         sort_desc.triggered.connect(lambda: self.sort_column(False))
 
-    def filter_data(self, keyword):
-        filtered_data = filter_merged_table_by_keyword(keyword)
     
     def create_menu(self): 
         menubar = self.menuBar() 
@@ -128,13 +126,14 @@ class MyApp(QMainWindow):
         # Show the context menu
         self.context_menu.exec(event.globalPos())
  
-    def add_data_triggered(self):
-        current_table_name = "Experts"  # Replace with the logic to get the current table name
-        self.add_data_dialog = add_data_window(self, current_table_name)  # Pass table name
-        self.add_data_dialog.show()  # Show the dialog
         
     def del_data_triggered(self):
-        self.del_data_window = del_data_window()
+        table_name = self.get_current_table_name()
+        select_rows = self.get_select_rows()
+        item = []
+        for i in select_rows:
+            item.append(self.table.item(i,0).text())
+        self.del_data_window = del_data_window(self, table_name, item)
         self.del_data_window.show()
         
     def ch_data_triggered(self):
@@ -142,15 +141,19 @@ class MyApp(QMainWindow):
         if selected_row >= 0:  # Проверяем, что строка выбрана
             # Получаем имя текущей таблицы
             current_table_name = self.get_current_table_name()
+            item = int(self.table.item(selected_row,0).text())
             # Создаем окно редактирования
-            self.ch_data_window = EditDataWindow(self, current_table_name, selected_row)  # Передаем номер строки (SQLite использует 1-based indexing)
+            self.ch_data_window = EditDataWindow(self, current_table_name, item)  # Передаем номер строки (SQLite использует 1-based indexing)
             self.ch_data_window.show()
         else:
             QMessageBox.warning(self, "Ошибка", "Пожалуйста, выберите строку для редактирования.")
 
     def filter_data_triggered(self):
-        self.filter_data_window = filter_data_window()
+        self.filter_data_window = filter_data_window(MyApp)
         self.filter_data_window.show()
+    def get_select_rows(self):
+        selected_rows = self.table.selectionModel().selectedRows()
+        return [row.row() for row in selected_rows]
     
     def refresh_table(self):
         file = os.path.join("data", "DATABASE.db")
@@ -262,8 +265,10 @@ class add_data_window(QMainWindow):
             
             
 class filter_data_window(QMainWindow):
-    def __init__(self):
+    def __init__(self,parent):
         super().__init__()
+        self.parent = parent
+        
         self.setWindowTitle("Фильтрация данных")
         self.setGeometry(100, 100, 400, 300)
         self.groupBox = QGroupBox(self)
@@ -271,27 +276,53 @@ class filter_data_window(QMainWindow):
         self.groupBox.setGeometry(QRect(10, 10, 380, 280))
         self.label = QLabel(self.groupBox)
         self.label.setObjectName(u"label")
-        self.label.setGeometry(QRect(10, 30, 31, 21))
+        self.label.setText("Выберите регион:")
+        self.label.setGeometry(QRect(10, 30, 150, 21))
         self.pushButton = QPushButton(self.groupBox)
         self.pushButton.setObjectName(u"pushButton")
         self.pushButton.setGeometry(QRect(130, 210, 81, 21))
         self.pushButton_2 = QPushButton(self.groupBox)
         self.pushButton_2.setObjectName(u"pushButton_2")
         self.pushButton_2.setGeometry(QRect(10, 210, 81, 21))
-        self.lineEdit_2 = QLineEdit(self.groupBox)
-        self.lineEdit_2.setObjectName(u"lineEdit_2")
-        self.lineEdit_2.setGeometry(QRect(7, 54, 97, 19))
+        self.combobox = QComboBox(self.groupBox)
+        #self.lineEdit_2.setObjectName(u"lineEdit_2")
+        self.combobox.setGeometry(QRect(7, 54, 200, 19))
+        file = os.path.join("data", "DATABASE.db")
+
+        a = get_table(file,"Reg_obl_city")
+        unique_values = set(row[0] for row in a)
+        for value in unique_values:
+            if value != "region":
+                self.combobox.addItem(value)
+
+        
+        
         self.dark_theme = DarkTheme() 
         self.dark_theme.apply(self)
+        self.pushButton_2.setText("Закрыть")
+        self.pushButton.setText("Фильтровать")
         self.pushButton_2.clicked.connect(self.close_window)
+        self.pushButton.clicked.connect(self.filtr_data)
+
     def close_window(self):
         self.close()  
+    def filtr_data(self):
+        print(filter_merged_table_by_keyword(self.combobox.currentText()))
+        print(self.combobox.currentText())
+        '''self.table.clear()
+        data = filter_merged_table_by_keyword(self.combobox.currentText())
+        for i in range(len(data)):
+            self.table.addItem(data[i])
+        QMessageBox.information(self, "Успех", "Данные успешно добавлены!")
+        self.parent.refresh_table()'''
+
 
 class EditDataWindow(QMainWindow):
     def __init__(self, parent, table_name, row_number):
         super().__init__()
         self.parent = parent
         self.table_name = table_name
+
         self.row_number = row_number  # Используем 1-based индекс
         self.setWindowTitle("Редактирование данных")
         self.setGeometry(100, 100, 400, 400)
@@ -351,8 +382,11 @@ class EditDataWindow(QMainWindow):
 
 
 class del_data_window(QMainWindow):
-    def __init__(self):
+    def __init__(self,parent,table_name,select_rows):
         super().__init__()
+        self.parent = parent  # Ссылка на экземпляр MyApp
+        self.table_name = table_name
+        self.select_rows = select_rows
         self.setWindowTitle("Удаление данных")
         self.setGeometry(100, 100, 400, 300)
         self.groupBox = QGroupBox(self)
@@ -361,11 +395,11 @@ class del_data_window(QMainWindow):
         self.horizontalLayout = QHBoxLayout(self.groupBox)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         
-        self.pushButton = QPushButton("Delete", self.groupBox)
+        self.pushButton = QPushButton("Удалить", self.groupBox)
         self.pushButton.setObjectName(u"pushButton")
         self.horizontalLayout.addWidget(self.pushButton)
 
-        self.pushButton_2 = QPushButton("Cancel", self.groupBox)
+        self.pushButton_2 = QPushButton("Отмена", self.groupBox)
         self.pushButton_2.setObjectName(u"pushButton_2")
         self.horizontalLayout.addWidget(self.pushButton_2)
 
@@ -373,8 +407,25 @@ class del_data_window(QMainWindow):
         self.dark_theme.apply(self)
         self.pushButton_2.clicked.connect(self.close_window)
 
+        self.pushButton.clicked.connect(self.delete_selected_row)
+
     def close_window(self):
         self.close()  # Close the window
+    
+    def delete_selected_row(self):
+        file = os.path.join("data", "DATABASE.db")
+        del_rows = self.select_rows
+        
+        for i in del_rows:
+            if i is not None:
+                #сделать удаление по коду, а не по номеру строки
+                delete_row_by_code(file, self.table_name, int(i))
+                self.parent.refresh_table()      
+        QMessageBox.information(self, "Успех", "Данные успешно удалены!")
+        
+        
+    
+
 class ch_data_window(QMainWindow):
     def __init__(self):
         super().__init__()

@@ -67,3 +67,37 @@ def delete_row_by_number(file: str, table_name: str, row_number: int) -> None:
     except Exception as ex:
         print(f"Error while deleting {row_number} row from database: {ex}")
 
+def delete_row_by_code(file: str, table_name: str, kod: str) -> None:
+    """
+    Deletes a row by its code from the specified table in the SQLite database file.
+
+    Args:
+        file (str): path to the SQLite database file
+        table_name (str): name of the table
+        code (str): code of the row to be deleted
+
+    Returns:
+        None
+    """
+    try:
+        # Connect to the SQLite database
+        connection = connect_db(file)
+        cursor = connection.cursor()
+
+        # Check if the code exists in the table
+        cursor.execute(f"SELECT COUNT(*) FROM {table_name} WHERE kod = ?", (kod,))
+        exists = cursor.fetchone()[0]
+
+        if exists == 0:
+            raise ValueError("kod not found in the table")
+
+        # Delete the row by its code
+        cursor.execute(f"DELETE FROM {table_name} WHERE kod = ?", (kod,))
+
+        # Commit the changes
+        connection.commit()
+
+        # Close the connection
+        connection.close()
+    except Exception as ex:
+        print(f"Error while deleting row with code {kod} from database: {ex}")
