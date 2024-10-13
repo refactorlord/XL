@@ -19,7 +19,8 @@ class MyApp(QMainWindow):
     def __init__(self): 
         super().__init__()
         self.current_table_name = None
-        self.setWindowTitle("Управление организацией экспертизы научно-технических проектов") 
+        self.setWindowTitle("Управление организацией экспертизы научно-технических проектов")
+        self.sel_rows = 0 
         self.setGeometry(100, 100, 800, 600) 
         self.dark_theme = DarkTheme() 
         self.dark_theme.apply(self)    
@@ -43,6 +44,7 @@ class MyApp(QMainWindow):
         ch_data.triggered.connect(self.ch_data_triggered)
         sort_asc.triggered.connect(lambda: self.sort_column(True))
         sort_desc.triggered.connect(lambda: self.sort_column(False))
+
 
     
     def create_menu(self): 
@@ -94,14 +96,22 @@ class MyApp(QMainWindow):
             self.table.setColumnCount(cols)
             self.table.setRowCount(rows)
             self.insert_data(tb, rows, cols)
-
         self.current_table_name = name
+        if (name == "all"):
+            self.setWindowTitle("Управление организацией экспертизы научно-технических проектов: [ Объединенные таблицы ]")
+        elif name == "Experts":
+            self.setWindowTitle("Управление организацией экспертизы научно-технических проектов: [ Эксперты ]")
+        elif name == "grntirub":
+            self.setWindowTitle("Управление организацией экспертизы научно-технических проектов: [ ГРНТИ ]")
+        elif name == "Reg_obl_city":
+            self.setWindowTitle("Управление организацией экспертизы научно-технических проектов: [ Регионы ]")
         self.dark_theme = DarkTheme() 
         self.dark_theme.apply(self)
         self.table.horizontalHeader().setStyleSheet("QHeaderView::section { background-color: rgb(53, 53, 53); color: white; }")
         self.table.verticalHeader().setStyleSheet("QHeaderView::section { background-color: rgb(53, 53, 53); color: white; }")
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.update_context_menu()
         for i in range(cols):
             self.adjust_column_width(i)
         self.setCentralWidget(self.table)
@@ -154,6 +164,10 @@ class MyApp(QMainWindow):
     def get_select_rows(self):
         selected_rows = self.table.selectionModel().selectedRows()
         return [row.row() for row in selected_rows]
+    def update_context_menu(self):
+        self.sel_rows = self.get_select_rows()
+        self.context_menu.actions()[2].setEnabled(len(self.sel_rows) == 0)  # Изменить данные
+        print(self.sel_rows)
     
     def refresh_table(self):
         file = os.path.join("data", "DATABASE.db")
@@ -203,8 +217,8 @@ class add_data_window(QMainWindow):
         self.parent = parent  # Ссылка на экземпляр MyApp
         self.table_name = table_name
         self.setWindowTitle("Добавление новых данных")
-        self.setGeometry(100, 100, 400, 400)
-
+        self.setGeometry(100, 100, 600, 500)
+        self.setFixedSize(600,500)
         # Применение темной темы
         self.dark_theme = DarkTheme()
         self.dark_theme.apply(self)
@@ -225,7 +239,7 @@ class add_data_window(QMainWindow):
         self.pushButton_2 = QPushButton("Закрыть", self.groupBox)
         self.pushButton_2.setGeometry(10, 310, 81, 21)
         self.pushButton_2.clicked.connect(self.close)
-
+        self.close()
     def create_input_fields(self):
         # Получаем имена столбцов для текущей таблицы
         column_names = get_columns_in_table(os.path.join("data", "DATABASE.db"), self.table_name)
@@ -250,14 +264,17 @@ class add_data_window(QMainWindow):
         file = os.path.join("data", "DATABASE.db")
         add_row_to_table(file, self.table_name, data)
 
-        # Показываем сообщение об успешном добавлении
-        QMessageBox.information(self, "Успех", "Данные успешно добавлены!")
-
         # Очищаем поля ввода после добавления
         self.clear_fields()
 
         # Обновляем основную таблицу, чтобы отобразить новые данные
         self.parent.refresh_table()
+        QMessageBox.information(self, "Успех", "Данные успешно добавлены.")
+        self.close()
+        #перекидывает на последнюю добавленную строку
+        row_count = self.parent.table.rowCount()
+        self.parent.table.scrollToBottom()
+        self.parent.table.selectRow(row_count - 1)
 
     def clear_fields(self):
         for line_edit in self.fields.values():
@@ -270,7 +287,8 @@ class filter_data_window(QMainWindow):
         self.parent = parent
         
         self.setWindowTitle("Фильтрация данных")
-        self.setGeometry(100, 100, 400, 300)
+        self.setGeometry(100, 100, 600, 500)
+        self.setFixedSize(600,500)
         self.groupBox = QGroupBox(self)
         self.groupBox.setObjectName(u"groupBox")
         self.groupBox.setGeometry(QRect(10, 10, 380, 280))
@@ -325,8 +343,8 @@ class EditDataWindow(QMainWindow):
 
         self.row_number = row_number  # Используем 1-based индекс
         self.setWindowTitle("Редактирование данных")
-        self.setGeometry(100, 100, 400, 400)
-
+        self.setGeometry(100, 100, 600, 500)
+        self.setFixedSize(600,500)
         self.groupBox = QGroupBox(self)
         self.groupBox.setGeometry(10, 10, 380, 350)  # Уменьшили высоту группы
 
@@ -382,17 +400,27 @@ class EditDataWindow(QMainWindow):
 
 
 class del_data_window(QMainWindow):
-    def __init__(self,parent,table_name,select_rows):
+    def __init__(self,parent,table_name,select_rows):   
         super().__init__()
         self.parent = parent  # Ссылка на экземпляр MyApp
         self.table_name = table_name
         self.select_rows = select_rows
         self.setWindowTitle("Удаление данных")
-        self.setGeometry(100, 100, 400, 300)
+        self.setGeometry(100, 100, 500, 400)
+        self.setFixedSize(500, 400)
         self.groupBox = QGroupBox(self)
         self.groupBox.setObjectName(u"groupBox")
-        self.groupBox.setGeometry(10, 10, 380, 100)
-        self.horizontalLayout = QHBoxLayout(self.groupBox)
+        self.groupBox.setGeometry(50, 100, 400, 150)
+        
+        self.verticalLayout = QVBoxLayout(self.groupBox)
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        
+        self.label = QLabel(self.groupBox)
+        self.label.setObjectName(u"label")
+        self.label.setText("Вы действительно хотите удалить?")
+        self.verticalLayout.addWidget(self.label)
+
+        self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         
         self.pushButton = QPushButton("Удалить", self.groupBox)
@@ -403,10 +431,11 @@ class del_data_window(QMainWindow):
         self.pushButton_2.setObjectName(u"pushButton_2")
         self.horizontalLayout.addWidget(self.pushButton_2)
 
+        self.verticalLayout.addLayout(self.horizontalLayout)
+
         self.dark_theme = DarkTheme() 
         self.dark_theme.apply(self)
         self.pushButton_2.clicked.connect(self.close_window)
-
         self.pushButton.clicked.connect(self.delete_selected_row)
 
     def close_window(self):
@@ -430,7 +459,7 @@ class ch_data_window(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Редактирование данных")
-        self.setGeometry(100, 100, 400, 300)
+        self.setGeometry(100, 100, 600, 500)
         self.groupBox = QGroupBox(self)
         self.groupBox.setObjectName(u"groupBox")
         self.groupBox.setGeometry(QRect(10, 10, 380, 280))
