@@ -84,18 +84,22 @@ class MyApp(QMainWindow):
             tb = get_merged_table(file)
             cols = get_merged_columns(file)
             rows = get_merged_rows(file)
-            self.table = QTableWidget(rows, cols)
+            self.table = QTableWidget(rows - 1, cols)  # Adjusted for header row
             self.table.setColumnCount(cols)
-            self.table.setRowCount(rows)
-            self.insert_data(tb, rows, cols)
+            self.table.setRowCount(rows - 1)  # Adjusted for header row
+            self.insert_data(tb[1:], rows - 1, cols)  # Skip header row
+            for col in range(cols):
+                self.table.setHorizontalHeaderItem(col, QTableWidgetItem(tb[0][col]))  # Set header names
         else:
             tb = get_table(file, name)
             cols = get_columns_count_in_table(file, name)
             rows = get_rows_count_in_table(file, name)
-            self.table = QTableWidget(rows, cols)
+            self.table = QTableWidget(rows - 1, cols)  # Adjusted for header row
             self.table.setColumnCount(cols)
-            self.table.setRowCount(rows)
-            self.insert_data(tb, rows, cols)
+            self.table.setRowCount(rows - 1)  # Adjusted for header row
+            self.insert_data(tb[1:], rows - 1, cols)  # Skip header row
+            for col in range(cols):
+                self.table.setHorizontalHeaderItem(col, QTableWidgetItem(tb[0][col]))  # Set header names
         self.current_table_name = name
         if (name == "all"):
             self.setWindowTitle("Управление организацией экспертизы научно-технических проектов: [ Объединенные таблицы ]")
