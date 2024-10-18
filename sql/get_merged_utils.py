@@ -58,7 +58,7 @@ def get_merged_table(file):
         merged_table = cursor.fetchall()
 
         # Define the column names for the result in the desired order
-        column_names = ['Код', 'ФИО', 'Код "GRNTI"', 'Рубрика', 'Регион', 'Область', 'Город', 'Дата ввода']
+        column_names = ['Код', 'ФИО', 'ГРНТИ', 'Рубрика', 'Регион', 'Область', 'Город', 'Дата ввода']
 
         # Add the column names as the first row of the merged table
         if merged_table:

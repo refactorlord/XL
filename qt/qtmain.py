@@ -78,6 +78,8 @@ class MyApp(QMainWindow):
             for column in range(cols):
                 self.table.setItem(row, column, QTableWidgetItem(data[row][column]))
 
+
+
     def get_table_ui(self, name, flag=False):
         file = os.path.join("data", "DATABASE.db")
         if flag:
@@ -88,8 +90,6 @@ class MyApp(QMainWindow):
             self.table.setColumnCount(cols)
             self.table.setRowCount(rows - 1)  # Adjusted for header row
             self.insert_data(tb[1:], rows - 1, cols)  # Skip header row
-            for col in range(cols):
-                self.table.setHorizontalHeaderItem(col, QTableWidgetItem(tb[0][col]))  # Set header names
         else:
             tb = get_table(file, name)
             cols = get_columns_count_in_table(file, name)
@@ -98,17 +98,18 @@ class MyApp(QMainWindow):
             self.table.setColumnCount(cols)
             self.table.setRowCount(rows - 1)  # Adjusted for header row
             self.insert_data(tb[1:], rows - 1, cols)  # Skip header row
-            for col in range(cols):
-                self.table.setHorizontalHeaderItem(col, QTableWidgetItem(tb[0][col]))  # Set header names
+        for col in range(cols):
+            self.table.setHorizontalHeaderItem(col, QTableWidgetItem(tb[0][col]))  # Set header names
         self.current_table_name = name
-        if (name == "all"):
-            self.setWindowTitle("Управление организацией экспертизы научно-технических проектов: [ Объединенные таблицы ]")
-        elif name == "Experts":
-            self.setWindowTitle("Управление организацией экспертизы научно-технических проектов: [ Эксперты ]")
-        elif name == "grntirub":
-            self.setWindowTitle("Управление организацией экспертизы научно-технических проектов: [ ГРНТИ ]")
-        elif name == "Reg_obl_city":
-            self.setWindowTitle("Управление организацией экспертизы научно-технических проектов: [ Регионы ]")
+
+        titles = {
+            "all": "[ Объединенные таблицы ]",
+            "Experts": "[ Эксперты ]",
+            "grntirub": "[ ГРНТИ ]",
+            "Reg_obl_city": "[ Регионы ]"
+        }
+
+        self.setWindowTitle("Управление организацией экспертизы научно-технических проектов: " + titles.get(name, ""))
         self.dark_theme = DarkTheme() 
         self.dark_theme.apply(self)
         self.table.horizontalHeader().setStyleSheet("QHeaderView::section { background-color: rgb(53, 53, 53); color: white; }")
@@ -171,7 +172,7 @@ class MyApp(QMainWindow):
     def update_context_menu(self):
         self.sel_rows = self.get_select_rows()
         self.context_menu.actions()[2].setEnabled(len(self.sel_rows) == 0)  # Изменить данные
-        print(self.sel_rows)
+        #print(self.sel_rows)
     
     def refresh_table(self):
         file = os.path.join("data", "DATABASE.db")

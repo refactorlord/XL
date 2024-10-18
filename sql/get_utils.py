@@ -27,7 +27,14 @@ def get_table(file, table_name):
         table = cursor.fetchall()
 
         # Add the column names as the first row of the table
-        table.insert(0, [col[1] for col in columns])
+        if table_name == "Experts":
+            table.insert(0, ['Код', 'ФИО', 'Регион', 'Город', 'ГРНТИ', 'Ключевое слово', 'Участие', 'Дата ввода'])
+        elif table_name == "grntirub":
+            table.insert(0, ["Код", "Рубрика"])
+        elif table_name == "Reg_obl_city":
+            table.insert(0, ["Регион", "Область", "Город"])
+        else:
+            table.insert(0, [col[1] for col in columns])
         connection.close()
         return table
     except sqlite3.Error as ex:
