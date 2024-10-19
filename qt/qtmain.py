@@ -444,6 +444,7 @@ class del_data_window(QMainWindow):
         self.pushButton.clicked.connect(self.delete_selected_row)
 
     def close_window(self):
+        
         self.close()  # Close the window
     
     def delete_selected_row(self):
@@ -453,7 +454,7 @@ class del_data_window(QMainWindow):
         for i in del_rows:
             if i is not None:
                 #сделать удаление по коду, а не по номеру строки
-                delete_row_by_code(file, self.table_name, int(i))
+                delete_row_by_code(file, self.table_name, str(i))
                 self.parent.refresh_table()      
         QMessageBox.information(self, "Успех", "Данные успешно удалены!")
         

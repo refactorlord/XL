@@ -70,11 +70,12 @@ def delete_row_by_number(file: str, table_name: str, row_number: int) -> None:
 def delete_row_by_code(file: str, table_name: str, kod: str) -> None:
     """
     Deletes a row by its code from the specified table in the SQLite database file.
+    If no unique code exists, attempts to delete by ROWID.
 
     Args:
         file (str): path to the SQLite database file
         table_name (str): name of the table
-        code (str): code of the row to be deleted
+        kod (str): code of the row to be deleted
 
     Returns:
         None
@@ -84,20 +85,36 @@ def delete_row_by_code(file: str, table_name: str, kod: str) -> None:
         connection = connect_db(file)
         cursor = connection.cursor()
 
+        # Determine the column to check based on the table name
+        if table_name == "Experts":
+            code_column = "kod"
+        elif table_name == "grntirub":
+            code_column = "codrub"
+        elif table_name == "Reg_obl_city":
+            code_column = "region"  # Или другой подходящий столбец
+        else:
+            raise ValueError("Unsupported table name")
+
         # Check if the code exists in the table
-        cursor.execute(f"SELECT COUNT(*) FROM {table_name} WHERE kod = ?", (kod,))
-        exists = cursor.fetchone()[0]
+        cursor.execute(f"SELECT ROWID FROM {table_name} WHERE {code_column} = ?", (kod,))
+        row = cursor.fetchone()
 
-        if exists == 0:
-            raise ValueError("kod not found in the table")
+        if row is None:
+            # Если уникальный код не найден, можно выбрать строку по ROWID
+            cursor.execute(f"SELECT ROWID FROM {table_name} WHERE {code_column} = ?", (kod,))
+            row = cursor.fetchone()
 
-        # Delete the row by its code
-        cursor.execute(f"DELETE FROM {table_name} WHERE kod = ?", (kod,))
+            if row is None:
+                raise ValueError(f"{kod} not found in the table {table_name}")
+
+            # Удалить строку по ROWID
+            cursor.execute(f"DELETE FROM {table_name} WHERE ROWID = ?", (row[0],))
+        else:
+            # Удалить по уникальному коду
+            cursor.execute(f"DELETE FROM {table_name} WHERE {code_column} = ?", (kod,))
 
         # Commit the changes
         connection.commit()
-
-        # Close the connection
         connection.close()
     except Exception as ex:
         print(f"Error while deleting row with code {kod} from database: {ex}")
