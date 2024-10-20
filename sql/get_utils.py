@@ -32,7 +32,7 @@ def get_table(file, table_name):
         elif table_name == "grntirub":
             table.insert(0, ["Код", "Рубрика"])
         elif table_name == "Reg_obl_city":
-            table.insert(0, ["Регион", "Область", "Город"])
+            table.insert(0, ["Код", "Регион", "Область", "Город"])
         else:
             table.insert(0, [col[1] for col in columns])
         connection.close()

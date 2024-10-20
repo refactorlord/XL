@@ -86,12 +86,10 @@ def delete_row_by_code(file: str, table_name: str, kod: str) -> None:
         cursor = connection.cursor()
 
         # Determine the column to check based on the table name
-        if table_name == "Experts":
+        if table_name == "Experts" or table_name == "Reg_obl_city":
             code_column = "kod"
         elif table_name == "grntirub":
             code_column = "codrub"
-        elif table_name == "Reg_obl_city":
-            code_column = "region"  # Или другой подходящий столбец
         else:
             raise ValueError("Unsupported table name")
 
