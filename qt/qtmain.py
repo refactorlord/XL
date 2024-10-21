@@ -286,7 +286,7 @@ class add_data_window(QMainWindow):
             
             
 class filter_data_window(QMainWindow):
-    def __init__(self,parent):
+    def __init__(self, parent):
         super().__init__()
         self.parent = parent
         
@@ -352,7 +352,7 @@ class filter_data_window(QMainWindow):
         self.pushButton_2.setText("Закрыть")
         self.pushButton.setText("Фильтровать")
         self.pushButton_2.clicked.connect(self.close_window)
-        self.pushButton.clicked.connect(self.filtr_data)
+        self.pushButton.clicked.connect(self.filter_data_ui)
 
     def obl_filtr(self, a):
         selected_region = self.combobox.currentText()
@@ -380,7 +380,7 @@ class filter_data_window(QMainWindow):
     def close_window(self):
         self.close()
     
-    def filtr_data(self):
+    def filter_data_ui(self):
         print("Clicked button filtering")
         # Collect the selected values from the combo boxes
         selected_region = self.combobox.currentText()
@@ -400,6 +400,27 @@ class filter_data_window(QMainWindow):
         filtered_data = get_filtered_table(file, selected_values)
         # You can do something with the filtered data here, like updating a view
         print("Filtered data:", filtered_data)
+        print("Number of rows:", len(filtered_data) - 1)
+        tb = filtered_data
+        cols = 8
+        rows = len(filtered_data) - 1
+        self.table = QTableWidget(rows - 1, cols)  # Adjusted for header row
+        self.table.setColumnCount(cols)
+        self.table.setRowCount(rows - 1)  # Adjusted for header row
+        self.parent.insert_data(self, tb[1:], rows - 1, cols)  # Skip header row
+        for col in range(cols):
+            self.table.setHorizontalHeaderItem(col, QTableWidgetItem(tb[0][col]))  # Set header names
+        self.setWindowTitle("Управление организацией экспертизы научно-технических проектов: [ Объединенные таблицы ] [filtered]")
+        self.dark_theme = DarkTheme() 
+        self.dark_theme.apply(self)
+        self.table.horizontalHeader().setStyleSheet("QHeaderView::section { background-color: rgb(53, 53, 53); color: white; }")
+        self.table.verticalHeader().setStyleSheet("QHeaderView::section { background-color: rgb(53, 53, 53); color: white; }")
+        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+#       self.parent.update_context_menu(self)
+        for i in range(cols):
+            self.parent.adjust_column_width(self, i)
+        self.setCentralWidget(self.table)
 
 class EditDataWindow(QMainWindow):
     def __init__(self, parent, table_name, row_number):

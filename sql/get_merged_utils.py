@@ -158,7 +158,7 @@ def get_merged_columns(file):
         columns_grntirub = cursor.fetchall()
 
         # Construct the list of column names
-        column_names = ['Код', 'ФИО', 'Код "GRNTI"', 'Рубрика', 'Регион', 'Область', 'Город', 'Дата ввода']
+        column_names = ['Код', 'ФИО', 'ГРНТИ', 'Рубрика', 'Регион', 'Область', 'Город', 'Дата ввода']
 
         return len(column_names)
     except Exception as ex:
