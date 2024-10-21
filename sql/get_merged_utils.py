@@ -1,6 +1,76 @@
 import sqlite3
 from sql.db_utils import connect_db
 
+def get_filtered_table(file, filters):
+    """
+    Returns a filtered table based on the provided filters.
+    """
+    try:
+        connection = sqlite3.connect(file)
+        cursor = connection.cursor()
+
+        # Start building the query
+        query = f"""
+            SELECT 
+                CAST(Experts.kod AS TEXT) AS kod, 
+                Experts.name, 
+                Experts.grnti, 
+                grntirub.rubrika,
+                Experts.region, 
+                Reg_obl_city.oblname, 
+                Experts.city, 
+                Experts.input_date
+            FROM 
+                Experts
+            INNER JOIN 
+                Reg_obl_city ON Experts.region = Reg_obl_city.region AND Experts.city = Reg_obl_city.city
+            LEFT JOIN 
+                grntirub ON COALESCE(
+                    SUBSTR(Experts.grnti, 1, INSTR(Experts.grnti, '.') - 1),
+                    SUBSTR(Experts.grnti, 1, INSTR(Experts.grnti, ';') - 1)
+                ) = grntirub.codrub
+            WHERE 
+                Experts.grnti IS NOT NULL
+        """
+
+        #print("Base query:", query)  # Debug: Print the base query
+        #print("Filters received:", filters)  # Debug: Print filters
+
+        conditions = []
+        filter_fields = {
+            'Experts.region': filters[0],
+            'Reg_obl_city.oblname': filters[1],
+            'Experts.city': filters[2],
+            'grntirub.rubrika': filters[3],
+        }
+
+        for field, value in filter_fields.items():
+            if value and value != 'Любой регион' and value != 'Любая Область' and value != 'Любой Город' and value != 'Любое ГРНТИ':
+                conditions.append(f"{field} = '{value}'")
+
+        if conditions:
+            query += " AND " + " AND ".join(conditions)
+
+        #print("Final query to be executed:", query)  # Print the final query before execution
+
+        cursor.execute(query)
+        filtered_table = cursor.fetchall()
+        print("Raw fetched data:", filtered_table)  # Print the raw fetched data
+
+        # Add column names to the result if data is fetched
+        column_names = ['Код', 'ФИО', 'ГРНТИ', 'Рубрика', 'Регион', 'Область', 'Город', 'Дата ввода']
+        if filtered_table:
+            filtered_table.insert(0, column_names)
+
+        cursor.close()
+        connection.close()
+
+        return filtered_table
+
+    except sqlite3.Error as ex:
+        print(f"Error while working with the database: {ex}")
+        return None
+
 def get_merged_table(file):
     """
     Returns a merged table of Experts and Reg_obl_city tables and grntirub table filtered by the first two characters of the grnti field.

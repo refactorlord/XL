@@ -9,7 +9,6 @@ from PySide6.QtWidgets import (
     QGroupBox, QLabel, QHBoxLayout, QVBoxLayout
 )
 from PySide6.QtGui import QPalette, QColor, QAction
-from filter_by_keyword import *
 from sql.cell_utils import *
 from sql.edit_utils import *
 from sql.get_utils import *
@@ -341,15 +340,13 @@ class filter_data_window(QMainWindow):
         self.combobox.activated.connect(lambda: self.obl_filtr(a))
         self.combobox2.activated.connect(lambda: self.gorod_filtr(a))
 
-        b =  get_table(file, "grntirub")
+        b = get_table(file, "grntirub")
         grnti = sorted(list(set(row[1] for row in b)))
         self.combobox4.addItem("Любое ГРНТИ")
         for value in grnti:
             if value != "Код":
-                print(1)
                 self.combobox4.addItem(value)
         
-        print(b)
         self.dark_theme = DarkTheme() 
         self.dark_theme.apply(self)
         self.pushButton_2.setText("Закрыть")
@@ -379,18 +376,30 @@ class filter_data_window(QMainWindow):
         for value in city:
             if value != "Город":
                 self.combobox3.addItem(value)
-    def close_window(self):
-        self.close()  
-    def filtr_data(self):
-        print(filter_merged_table_by_keyword(self.combobox.currentText()))
-        print(self.combobox.currentText())
-        '''self.table.clear()
-        data = filter_merged_table_by_keyword(self.combobox.currentText())
-        for i in range(len(data)):
-            self.table.addItem(data[i])
-        QMessageBox.information(self, "Успех", "Данные успешно добавлены!")
-        self.parent.refresh_table()'''
 
+    def close_window(self):
+        self.close()
+    
+    def filtr_data(self):
+        print("Clicked button filtering")
+        # Collect the selected values from the combo boxes
+        selected_region = self.combobox.currentText()
+        selected_oblast = self.combobox2.currentText()
+        selected_city = self.combobox3.currentText()
+        selected_grnti = self.combobox4.currentText()
+        # Create an array of selected values
+        selected_values = [
+            selected_region,
+            selected_oblast,
+            selected_city,
+            selected_grnti
+        ]
+        print("Selected values:", selected_values)
+        # Call the get_filtered_table function with the appropriate arguments
+        file = os.path.join("data", "DATABASE.db")
+        filtered_data = get_filtered_table(file, selected_values)
+        # You can do something with the filtered data here, like updating a view
+        print("Filtered data:", filtered_data)
 
 class EditDataWindow(QMainWindow):
     def __init__(self, parent, table_name, row_number):
