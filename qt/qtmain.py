@@ -332,19 +332,23 @@ class filter_data_window(QMainWindow):
 
         a = get_table(file, "Reg_obl_city")
         regions = sorted(list(set(row[1] for row in a)))
+        self.combobox.addItem("Любой регион")
         for value in regions:
             if value != "Регион":
                 self.combobox.addItem(value)
+        
         print(self.combobox.currentText())
         self.combobox.activated.connect(lambda: self.obl_filtr(a))
         self.combobox2.activated.connect(lambda: self.gorod_filtr(a))
 
         b =  get_table(file, "grntirub")
         grnti = sorted(list(set(row[1] for row in b)))
+        self.combobox4.addItem("Любое ГРНТИ")
         for value in grnti:
             if value != "Код":
                 print(1)
                 self.combobox4.addItem(value)
+        
         print(b)
         self.dark_theme = DarkTheme() 
         self.dark_theme.apply(self)
@@ -358,15 +362,18 @@ class filter_data_window(QMainWindow):
         self.combobox2.clear()
         self.combobox3.clear()
         print(selected_region)
+        self.combobox2.addItem("Любая Область")
         obls = sorted(list(set(row[2] for row in a if row[1] == selected_region)))
         print(obls)
         for value in obls:
             if value != "Область":
                 self.combobox2.addItem(value)
+        
     def gorod_filtr(self, a):
         selected_region = self.combobox2.currentText()
         self.combobox3.clear()
         print(selected_region)
+        self.combobox3.addItem("Любой Город")
         city = sorted(list(set(row[3] for row in a if row[2] == selected_region)))
         print(city)
         for value in city:
