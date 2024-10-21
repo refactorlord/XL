@@ -57,7 +57,7 @@ class MyApp(QMainWindow):
         groups_menu = menubar.addMenu("Группы")
         report_menu = menubar.addMenu("Отчет")
         help_menu = menubar.addMenu("Помощь")
-        action1 = QAction("Все таблицы", self) 
+        action1 = QAction("Объедененные таблицы", self) 
         action1.triggered.connect(lambda: self.get_table_ui("all", True)) 
         data_menu.addAction(action1) 
         
@@ -301,6 +301,18 @@ class filter_data_window(QMainWindow):
         self.label.setObjectName(u"label")
         self.label.setText("Выберите регион:")
         self.label.setGeometry(QRect(10, 30, 150, 21))
+        self.label2 = QLabel(self.groupBox)
+        self.label2.setObjectName(u"label3")
+        self.label2.setText("Выберите Область:")
+        self.label2.setGeometry(QRect(10, 70, 150, 21))
+        self.label3 = QLabel(self.groupBox)
+        self.label3.setObjectName(u"label2")
+        self.label3.setText("Выберите Город:")
+        self.label3.setGeometry(QRect(10,110, 150, 21))
+        self.label4 = QLabel(self.groupBox)
+        self.label4.setObjectName(u"label2")
+        self.label4.setText("Выберите ГРНТИ:")
+        self.label4.setGeometry(QRect(10,150, 150, 21))
         self.pushButton = QPushButton(self.groupBox)
         self.pushButton.setObjectName(u"pushButton")
         self.pushButton.setGeometry(QRect(130, 210, 81, 21))
@@ -308,18 +320,32 @@ class filter_data_window(QMainWindow):
         self.pushButton_2.setObjectName(u"pushButton_2")
         self.pushButton_2.setGeometry(QRect(10, 210, 81, 21))
         self.combobox = QComboBox(self.groupBox)
-        #self.lineEdit_2.setObjectName(u"lineEdit_2")
         self.combobox.setGeometry(QRect(7, 54, 200, 19))
+
+        self.combobox2 = QComboBox(self.groupBox)
+        self.combobox2.setGeometry(QRect(7, 90, 200, 19))
+        self.combobox3 = QComboBox(self.groupBox)        
+        self.combobox3.setGeometry(QRect(7, 130, 200, 19))
+        self.combobox4 = QComboBox(self.groupBox)
+        self.combobox4.setGeometry(QRect(7, 170, 200, 19))
         file = os.path.join("data", "DATABASE.db")
 
-        a = get_table(file,"Reg_obl_city")
-        unique_values = set(row[0] for row in a)
-        for value in unique_values:
-            if value != "region":
+        a = get_table(file, "Reg_obl_city")
+        regions = sorted(list(set(row[1] for row in a)))
+        for value in regions:
+            if value != "Регион":
                 self.combobox.addItem(value)
+        print(self.combobox.currentText())
+        self.combobox.activated.connect(lambda: self.obl_filtr(a))
+        self.combobox2.activated.connect(lambda: self.gorod_filtr(a))
 
-        
-        
+        b =  get_table(file, "grntirub")
+        grnti = sorted(list(set(row[1] for row in b)))
+        for value in grnti:
+            if value != "Код":
+                print(1)
+                self.combobox4.addItem(value)
+        print(b)
         self.dark_theme = DarkTheme() 
         self.dark_theme.apply(self)
         self.pushButton_2.setText("Закрыть")
@@ -327,6 +353,25 @@ class filter_data_window(QMainWindow):
         self.pushButton_2.clicked.connect(self.close_window)
         self.pushButton.clicked.connect(self.filtr_data)
 
+    def obl_filtr(self, a):
+        selected_region = self.combobox.currentText()
+        self.combobox2.clear()
+        self.combobox3.clear()
+        print(selected_region)
+        obls = sorted(list(set(row[2] for row in a if row[1] == selected_region)))
+        print(obls)
+        for value in obls:
+            if value != "Область":
+                self.combobox2.addItem(value)
+    def gorod_filtr(self, a):
+        selected_region = self.combobox2.currentText()
+        self.combobox3.clear()
+        print(selected_region)
+        city = sorted(list(set(row[3] for row in a if row[2] == selected_region)))
+        print(city)
+        for value in city:
+            if value != "Город":
+                self.combobox3.addItem(value)
     def close_window(self):
         self.close()  
     def filtr_data(self):
