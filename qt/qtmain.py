@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
     QTableWidgetItem, QWidget, QHeaderView, QMenu, 
     QMenuBar, QSizePolicy, QStatusBar, QAbstractItemView, 
     QPushButton, QDialog, QComboBox, QLineEdit, 
-    QGroupBox, QLabel, QHBoxLayout, QVBoxLayout
+    QGroupBox, QLabel, QHBoxLayout, QVBoxLayout, QGridLayout
 )
 from PySide6.QtGui import QPalette, QColor, QAction
 from sql.cell_utils import *
@@ -17,32 +17,38 @@ from sql.get_merged_utils import *
 class MyApp(QMainWindow): 
     def __init__(self): 
         super().__init__()
-        self.current_table_name = None
+        self.current_table_name =  None
         self.setWindowTitle("Управление организацией экспертизы научно-технических проектов")
         self.sel_rows = 0 
         self.setGeometry(100, 100, 800, 600) 
         self.dark_theme = DarkTheme() 
         self.dark_theme.apply(self)    
         self.create_menu()
-        self.create_context_menu()
-        self.setMouseTracking(True)
+        #self.create_context_menu()
+        
         self.dialogs = list()
 
     def create_context_menu(self):
         self.context_menu = QMenu(self)
-        add_data = self.context_menu.addAction("Добавить данные")
-        del_data = self.context_menu.addAction("Удалить данные")
-        ch_data = self.context_menu.addAction("Изменить данные")
-        sort_menu = self.context_menu.addMenu("Сортировка")
-        sort_asc = sort_menu.addAction("Сортировка по возрастанию")
-        sort_desc = sort_menu.addAction("Сортировка по убыванию")
-        filtr =  self.context_menu.addAction("Фильтрация")
-        filtr.triggered.connect(self.filter_data_triggered)
-        add_data.triggered.connect(self.add_data_triggered)
-        del_data.triggered.connect(self.del_data_triggered)
-        ch_data.triggered.connect(self.ch_data_triggered)
-        sort_asc.triggered.connect(lambda: self.sort_column(True))
-        sort_desc.triggered.connect(lambda: self.sort_column(False))
+        self.setMouseTracking(True)
+        if (self.current_table_name!="all"):
+            add_data = self.context_menu.addAction("Добавить данные")
+            del_data = self.context_menu.addAction("Удалить данные")
+            ch_data = self.context_menu.addAction("Изменить данные")
+            sort_menu = self.context_menu.addMenu("Сортировка")
+            sort_asc = sort_menu.addAction("Сортировка по возрастанию")
+            sort_desc = sort_menu.addAction("Сортировка по убыванию")
+            add_data.triggered.connect(self.add_data_triggered)
+            del_data.triggered.connect(self.del_data_triggered)
+            ch_data.triggered.connect(self.ch_data_triggered)
+            sort_asc.triggered.connect(lambda: self.sort_column(True))
+            sort_desc.triggered.connect(lambda: self.sort_column(False))
+        
+        print(self.current_table_name)
+        if self.current_table_name == "all":
+            filtr = self.context_menu.addAction("Фильтрация")
+            filtr.triggered.connect(self.filter_data_triggered)
+        
 
 
     
@@ -56,21 +62,23 @@ class MyApp(QMainWindow):
         groups_menu = menubar.addMenu("Группы")
         report_menu = menubar.addMenu("Отчет")
         help_menu = menubar.addMenu("Помощь")
-        action1 = QAction("Объедененные таблицы", self) 
-        action1.triggered.connect(lambda: self.get_table_ui("all", True)) 
-        data_menu.addAction(action1) 
         
+        action1 = QAction("Объедененные таблицы", self) 
+        action1.triggered.connect(lambda: self.get_table_ui("all", True))
+        data_menu.addAction(action1) 
+
         action2 = QAction("Эксперты", self)
-        action2.triggered.connect(lambda: self.get_table_ui("Experts")) 
+        action2.triggered.connect(lambda: self.get_table_ui("Experts"))
         data_menu.addAction(action2) 
- 
+
         action3 = QAction("ГРНТИ", self)
-        action3.triggered.connect(lambda: self.get_table_ui("grntirub")) 
+        action3.triggered.connect(lambda:self.get_table_ui("grntirub")) 
         data_menu.addAction(action3) 
- 
+
         action4 = QAction("Регионы", self)
         action4.triggered.connect(lambda: self.get_table_ui("Reg_obl_city")) 
         data_menu.addAction(action4) 
+
 
     def insert_data(self, data, rows, cols):
         for row in range(rows):
@@ -80,6 +88,8 @@ class MyApp(QMainWindow):
 
 
     def get_table_ui(self, name, flag=False):
+        self.current_table_name = name
+        self.create_context_menu()
         file = os.path.join("data", "DATABASE.db")
         if flag:
             tb = get_merged_table(file)
@@ -99,7 +109,7 @@ class MyApp(QMainWindow):
             self.insert_data(tb[1:], rows - 1, cols)  # Skip header row
         for col in range(cols):
             self.table.setHorizontalHeaderItem(col, QTableWidgetItem(tb[0][col]))  # Set header names
-        self.current_table_name = name
+        
 
         titles = {
             "all": "[ Объединенные таблицы ]",
@@ -138,7 +148,8 @@ class MyApp(QMainWindow):
 
     def contextMenuEvent(self, event):
         # Show the context menu
-        self.context_menu.exec(event.globalPos())
+        if (self.current_table_name != None):
+            self.context_menu.exec(event.globalPos())
  
         
     def del_data_triggered(self):
@@ -170,7 +181,7 @@ class MyApp(QMainWindow):
         return [row.row() for row in selected_rows]
     def update_context_menu(self):
         self.sel_rows = self.get_select_rows()
-        self.context_menu.actions()[2].setEnabled(len(self.sel_rows) == 0)  # Изменить данные
+        #self.context_menu.actions()[2].setEnabled(len(self.sel_rows) == 0)  # Изменить данные
         #print(self.sel_rows)
     
     def refresh_table(self):
@@ -291,42 +302,63 @@ class filter_data_window(QMainWindow):
         self.parent = parent
         
         self.setWindowTitle("Фильтрация данных")
-        self.setGeometry(100, 100, 600, 500)
-        self.setFixedSize(600,500)
-        self.groupBox = QGroupBox(self)
-        self.groupBox.setObjectName(u"groupBox")
-        self.groupBox.setGeometry(QRect(10, 10, 380, 280))
-        self.label = QLabel(self.groupBox)
+        self.setGeometry(100, 100, 1600, 200)
+        self.setFixedSize(1600, 200)
+        
+        self.gridLayoutWidget = QWidget(self)
+        self.gridLayoutWidget.setObjectName(u"gridLayoutWidget")
+        self.gridLayoutWidget.setGeometry(QRect(10, 10, 1600, 70))
+        
+        self.gridLayout_2 = QGridLayout(self.gridLayoutWidget)
+        self.gridLayout_2.setObjectName(u"gridLayout_2")
+        self.gridLayout_2.setContentsMargins(0, 0, 0, 0)
+
+        self.label = QLabel(self.gridLayoutWidget)
         self.label.setObjectName(u"label")
         self.label.setText("Выберите регион:")
-        self.label.setGeometry(QRect(10, 30, 150, 21))
-        self.label2 = QLabel(self.groupBox)
-        self.label2.setObjectName(u"label3")
-        self.label2.setText("Выберите Область:")
-        self.label2.setGeometry(QRect(10, 70, 150, 21))
-        self.label3 = QLabel(self.groupBox)
-        self.label3.setObjectName(u"label2")
-        self.label3.setText("Выберите Город:")
-        self.label3.setGeometry(QRect(10,110, 150, 21))
-        self.label4 = QLabel(self.groupBox)
-        self.label4.setObjectName(u"label2")
-        self.label4.setText("Выберите ГРНТИ:")
-        self.label4.setGeometry(QRect(10,150, 150, 21))
-        self.pushButton = QPushButton(self.groupBox)
-        self.pushButton.setObjectName(u"pushButton")
-        self.pushButton.setGeometry(QRect(130, 210, 81, 21))
-        self.pushButton_2 = QPushButton(self.groupBox)
-        self.pushButton_2.setObjectName(u"pushButton_2")
-        self.pushButton_2.setGeometry(QRect(10, 210, 81, 21))
-        self.combobox = QComboBox(self.groupBox)
-        self.combobox.setGeometry(QRect(7, 54, 200, 19))
+        self.gridLayout_2.addWidget(self.label, 0, 0, 1, 1)
 
-        self.combobox2 = QComboBox(self.groupBox)
-        self.combobox2.setGeometry(QRect(7, 90, 200, 19))
-        self.combobox3 = QComboBox(self.groupBox)        
-        self.combobox3.setGeometry(QRect(7, 130, 200, 19))
-        self.combobox4 = QComboBox(self.groupBox)
-        self.combobox4.setGeometry(QRect(7, 170, 200, 19))
+        self.combobox = QComboBox(self.gridLayoutWidget)
+        self.combobox.setObjectName(u"combobox")
+        self.gridLayout_2.addWidget(self.combobox, 1, 0, 1, 1)
+
+        self.label2 = QLabel(self.gridLayoutWidget)
+        self.label2.setObjectName(u"label2")
+        self.label2.setText("Выберите Область:")
+        self.gridLayout_2.addWidget(self.label2, 0, 1, 1, 1)
+
+        self.combobox2 = QComboBox(self.gridLayoutWidget)
+        self.combobox2.setObjectName(u"combobox2")
+        self.gridLayout_2.addWidget(self.combobox2, 1, 1, 1, 1)
+
+        self.label3 = QLabel(self.gridLayoutWidget)
+        self.label3.setObjectName(u"label3")
+        self.label3.setText("Выберите Город:")
+        self.gridLayout_2.addWidget(self.label3, 0, 2, 1, 1)
+
+        self.combobox3 = QComboBox(self.gridLayoutWidget)
+        self.combobox3.setObjectName(u"combobox3")
+        self.gridLayout_2.addWidget(self.combobox3, 1, 2, 1, 1)
+
+        self.label4 = QLabel(self.gridLayoutWidget)
+        self.label4.setObjectName(u"label4")
+        self.label4.setText("Выберите ГРНТИ:")
+        self.gridLayout_2.addWidget(self.label4, 0, 3, 1, 1)
+
+        self.combobox4 = QComboBox(self.gridLayoutWidget)
+        self.combobox4.setObjectName(u"combobox4")
+        self.gridLayout_2.addWidget(self.combobox4, 1, 3, 1, 1)
+
+        self.pushButton = QPushButton(self.gridLayoutWidget)
+        self.pushButton.setObjectName(u"pushButton")
+        self.pushButton.setText("Фильтровать")
+        self.gridLayout_2.addWidget(self.pushButton, 2, 2, 1, 1)
+
+        self.pushButton_2 = QPushButton(self.gridLayoutWidget)
+        self.pushButton_2.setObjectName(u"pushButton_2")
+        self.pushButton_2.setText("Закрыть")
+        self.gridLayout_2.addWidget(self.pushButton_2, 2, 3, 1, 1)
+
         file = os.path.join("data", "DATABASE.db")
 
         a = get_table(file, "Reg_obl_city")
@@ -336,7 +368,6 @@ class filter_data_window(QMainWindow):
             if value != "Регион":
                 self.combobox.addItem(value)
         
-        print(self.combobox.currentText())
         self.combobox.activated.connect(lambda: self.obl_filtr(a))
         self.combobox2.activated.connect(lambda: self.gorod_filtr(a))
 
@@ -349,8 +380,6 @@ class filter_data_window(QMainWindow):
         
         self.dark_theme = DarkTheme() 
         self.dark_theme.apply(self)
-        self.pushButton_2.setText("Закрыть")
-        self.pushButton.setText("Фильтровать")
         self.pushButton_2.clicked.connect(self.close_window)
         self.pushButton.clicked.connect(self.filter_data_ui)
 
@@ -382,6 +411,8 @@ class filter_data_window(QMainWindow):
     
     def filter_data_ui(self):
         print("Clicked button filtering")
+        self.setGeometry(100, 100, 1600, 1200)
+        self.setFixedSize(1600,1200)
         # Collect the selected values from the combo boxes
         selected_region = self.combobox.currentText()
         selected_oblast = self.combobox2.currentText()
@@ -410,7 +441,7 @@ class filter_data_window(QMainWindow):
         self.parent.insert_data(self, tb[1:], rows - 1, cols)  # Skip header row
         for col in range(cols):
             self.table.setHorizontalHeaderItem(col, QTableWidgetItem(tb[0][col]))  # Set header names
-        self.setWindowTitle("Управление организацией экспертизы научно-технических проектов: [ Объединенные таблицы ] [filtered]")
+        self.setWindowTitle("Управление организацией экспертизы научно-технических проектов: [ Объединенные таблицы ] [ Применен фильтр ]")
         self.dark_theme = DarkTheme() 
         self.dark_theme.apply(self)
         self.table.horizontalHeader().setStyleSheet("QHeaderView::section { background-color: rgb(53, 53, 53); color: white; }")
