@@ -259,7 +259,7 @@ class add_data_window(QMainWindow):
         self.close()
     def create_input_fields(self):
         # Получаем имена столбцов для текущей таблицы
-        column_names = get_columns_in_table(os.path.join("data", "DATABASE.db"), self.table_name)
+        column_names = get_columns_in_table_rus(os.path.join("data", "DATABASE.db"), self.table_name)
 
         for index, column_name in enumerate(column_names):
             label = QLabel(column_name, self.groupBox)

@@ -117,3 +117,39 @@ def get_columns_in_table(file: str, table_name: str):
     except Exception as ex:
         print(f"Error while fetching columns: {ex}")
         return []
+
+def get_columns_in_table_rus(file: str, table_name: str):
+    try:
+        connection = connect_db(file)
+        cursor = connection.cursor()
+
+        # Execute the query to fetch the column information
+        cursor.execute(f"PRAGMA table_info({table_name})")
+
+        # Fetch the column information
+        columns = [column[1] for column in cursor.fetchall()]
+
+        connection.close()
+
+        if table_name == "Experts":
+            if columns == ['kod', 'name', 'region', 'city', 'grnti', 'key_words', 'take_part', 'input_date']:
+                columns = ['Код', 'ФИО', 'Регион', 'Город', 'ГРНТИ', 'Ключевое слово', 'Участие', 'Дата ввода']
+            else:
+                return []
+        elif table_name == "grntirub":
+            if columns == ['codrub', 'rubrika']:
+                columns = ['Код', 'Рубрика']
+            else:
+                return []
+        elif table_name == "Reg_obl_city":
+            if columns == ['kod', 'region', 'oblname', 'city']:
+                columns = ['Код', 'Регион', 'Область', 'Город']
+            else:
+                return []
+        else:
+            return []
+        
+        return columns
+    except Exception as ex:
+        print(f"Error while fetching columns: {ex}")
+        return []
