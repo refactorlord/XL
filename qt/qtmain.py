@@ -178,9 +178,9 @@ class MyApp(QMainWindow):
     def filter_data_triggered(self):
         self.filter_data_window = filter_data_window(MyApp)
         self.filter_data_window.show()
-    #def get_select_rows(self):
-     #   selected_rows = self.
-      #  return [row.row() for row in selected_rows]
+    def get_select_rows(self):
+        selected_rows = self.table.selectionModel().selectedRows()
+        return [row.row() for row in selected_rows]
     def update_context_menu(self):
         self.sel_rows = len(self.table.selectionModel().selectedRows())
         self.create_context_menu()
@@ -236,6 +236,7 @@ class add_data_window(QMainWindow):
         self.setWindowTitle("Добавление новых данных")
         self.setGeometry(100, 100, 600, 500)
         self.setFixedSize(600,500)
+        self.setWindowModality(Qt.ApplicationModal)
         # Применение темной темы
         self.dark_theme = DarkTheme()
         self.dark_theme.apply(self)
@@ -302,7 +303,7 @@ class filter_data_window(QMainWindow):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
-        
+        self.setWindowModality(Qt.ApplicationModal)
         self.setWindowTitle("Фильтрация данных")
         self.setGeometry(100, 100, 1600, 200)
         self.setFixedSize(1600, 200)
@@ -454,6 +455,7 @@ class filter_data_window(QMainWindow):
 class EditDataWindow(QMainWindow):
     def __init__(self, parent, table_name, row_number):
         super().__init__()
+        self.setWindowModality(Qt.ApplicationModal)
         self.parent = parent
         self.table_name = table_name
 
@@ -518,6 +520,7 @@ class EditDataWindow(QMainWindow):
 class del_data_window(QMainWindow):
     def __init__(self,parent,table_name,select_rows):   
         super().__init__()
+        self.setWindowModality(Qt.ApplicationModal)
         self.parent = parent  # Ссылка на экземпляр MyApp
         self.table_name = table_name
         self.select_rows = select_rows
@@ -553,6 +556,7 @@ class del_data_window(QMainWindow):
         self.dark_theme.apply(self)
         self.pushButton_2.clicked.connect(self.close_window)
         self.pushButton.clicked.connect(self.delete_selected_row)
+        self.close()
 
     def close_window(self):
         
@@ -568,6 +572,7 @@ class del_data_window(QMainWindow):
                 delete_row_by_code(file, self.table_name, str(i))
                 self.parent.refresh_table()      
         QMessageBox.information(self, "Успех", "Данные успешно удалены!")
+        self.close()
         
         
     
