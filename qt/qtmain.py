@@ -24,34 +24,35 @@ class MyApp(QMainWindow):
         self.dark_theme = DarkTheme() 
         self.dark_theme.apply(self)    
         self.create_menu()
-        #self.create_context_menu()
         
         self.dialogs = list()
 
     def create_context_menu(self):
         self.context_menu = QMenu(self)
         self.setMouseTracking(True)
-        if (self.current_table_name!="all"):
-            add_data = self.context_menu.addAction("Добавить данные")
+        
+        if (self.current_table_name != "all"):
+            
+            
+            if (self.sel_rows <= 1):
+                ch_data = self.context_menu.addAction("Изменить данные")
+                add_data = self.context_menu.addAction("Добавить данные")
+                #self.context_menu.actions()[2].setEnabled(len(self.sel_rows)) == 0
             del_data = self.context_menu.addAction("Удалить данные")
-            ch_data = self.context_menu.addAction("Изменить данные")
+            del_data.triggered.connect(self.del_data_triggered)
             sort_menu = self.context_menu.addMenu("Сортировка")
             sort_asc = sort_menu.addAction("Сортировка по возрастанию")
             sort_desc = sort_menu.addAction("Сортировка по убыванию")
-            add_data.triggered.connect(self.add_data_triggered)
-            del_data.triggered.connect(self.del_data_triggered)
-            ch_data.triggered.connect(self.ch_data_triggered)
+            if self.sel_rows <= 1 :
+                add_data.triggered.connect(self.add_data_triggered)
+                ch_data.triggered.connect(self.ch_data_triggered)
             sort_asc.triggered.connect(lambda: self.sort_column(True))
             sort_desc.triggered.connect(lambda: self.sort_column(False))
         
-        print(self.current_table_name)
         if self.current_table_name == "all":
             filtr = self.context_menu.addAction("Фильтрация")
             filtr.triggered.connect(self.filter_data_triggered)
-        
 
-
-    
     def create_menu(self): 
         menubar = self.menuBar() 
         menubar.setStyleSheet("QMenuBar { background-color: rgb(53, 53, 53); color: white; }"
@@ -79,17 +80,14 @@ class MyApp(QMainWindow):
         action4.triggered.connect(lambda: self.get_table_ui("Reg_obl_city")) 
         data_menu.addAction(action4) 
 
-
     def insert_data(self, data, rows, cols):
         for row in range(rows):
             for column in range(cols):
                 self.table.setItem(row, column, QTableWidgetItem(data[row][column]))
 
-
-
     def get_table_ui(self, name, flag=False):
         self.current_table_name = name
-        self.create_context_menu()
+        
         file = os.path.join("data", "DATABASE.db")
         if flag:
             tb = get_merged_table(file)
@@ -99,6 +97,7 @@ class MyApp(QMainWindow):
             self.table.setColumnCount(cols)
             self.table.setRowCount(rows - 1)  # Adjusted for header row
             self.insert_data(tb[1:], rows - 1, cols)  # Skip header row
+            
         else:
             tb = get_table(file, name)
             cols = get_columns_count_in_table(file, name)
@@ -107,17 +106,18 @@ class MyApp(QMainWindow):
             self.table.setColumnCount(cols)
             self.table.setRowCount(rows - 1)  # Adjusted for header row
             self.insert_data(tb[1:], rows - 1, cols)  # Skip header row
+            
+            
         for col in range(cols):
             self.table.setHorizontalHeaderItem(col, QTableWidgetItem(tb[0][col]))  # Set header names
         
-
         titles = {
             "all": "[ Объединенные таблицы ]",
             "Experts": "[ Эксперты ]",
             "grntirub": "[ ГРНТИ ]",
             "Reg_obl_city": "[ Регионы ]"
         }
-
+        self.table.selectionModel().selectionChanged.connect(self.update_context_menu)
         self.setWindowTitle("Управление организацией экспертизы научно-технических проектов: " + titles.get(name, ""))
         self.dark_theme = DarkTheme() 
         self.dark_theme.apply(self)
@@ -125,7 +125,9 @@ class MyApp(QMainWindow):
         self.table.verticalHeader().setStyleSheet("QHeaderView::section { background-color: rgb(53, 53, 53); color: white; }")
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self.update_context_menu()
+
+        #self.create_context_menu()
+        
         for i in range(cols):
             self.adjust_column_width(i)
         self.setCentralWidget(self.table)
@@ -176,13 +178,13 @@ class MyApp(QMainWindow):
     def filter_data_triggered(self):
         self.filter_data_window = filter_data_window(MyApp)
         self.filter_data_window.show()
-    def get_select_rows(self):
-        selected_rows = self.table.selectionModel().selectedRows()
-        return [row.row() for row in selected_rows]
+    #def get_select_rows(self):
+     #   selected_rows = self.
+      #  return [row.row() for row in selected_rows]
     def update_context_menu(self):
-        self.sel_rows = self.get_select_rows()
-        #self.context_menu.actions()[2].setEnabled(len(self.sel_rows) == 0)  # Изменить данные
-        #print(self.sel_rows)
+        self.sel_rows = len(self.table.selectionModel().selectedRows())
+        self.create_context_menu()
+
     
     def refresh_table(self):
         file = os.path.join("data", "DATABASE.db")
@@ -387,10 +389,8 @@ class filter_data_window(QMainWindow):
         selected_region = self.combobox.currentText()
         self.combobox2.clear()
         self.combobox3.clear()
-        print(selected_region)
         self.combobox2.addItem("Любая Область")
         obls = sorted(list(set(row[2] for row in a if row[1] == selected_region)))
-        print(obls)
         for value in obls:
             if value != "Область":
                 self.combobox2.addItem(value)
@@ -398,10 +398,8 @@ class filter_data_window(QMainWindow):
     def gorod_filtr(self, a):
         selected_region = self.combobox2.currentText()
         self.combobox3.clear()
-        print(selected_region)
         self.combobox3.addItem("Любой Город")
         city = sorted(list(set(row[3] for row in a if row[2] == selected_region)))
-        print(city)
         for value in city:
             if value != "Город":
                 self.combobox3.addItem(value)
