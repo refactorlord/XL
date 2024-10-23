@@ -8,11 +8,10 @@ def get_next_code(file, table_name):
     if not os.path.exists(code_file_path):
         with open(code_file_path, 'w') as fp:
             fp.write(str(next_code))
-    else:
-        with open(code_file_path, 'r') as fp:
-            next_code = int(fp.read()) + 1
-        with open(code_file_path, 'w') as fp:
-            fp.write(str(next_code))
+    with open(code_file_path, 'r') as fp:
+        next_code = int(fp.read()) + 1
+    with open(code_file_path, 'w') as fp:
+        fp.write(str(next_code))
     return next_code
 
 def add_row_to_table(file: str, table_name: str, data: list) -> None:
