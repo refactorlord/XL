@@ -1,4 +1,5 @@
 from sql.get_utils import connect_db, get_rows_count_in_table
+from datetime import datetime
 
 def add_row_to_table(file: str, table_name: str, data: list) -> None:
     """
@@ -16,8 +17,14 @@ def add_row_to_table(file: str, table_name: str, data: list) -> None:
         # Get column names
         cursor.execute(f"PRAGMA table_info({table_name})")
         column_names = [column[1] for column in cursor.fetchall()]
-        
+        if table_name == "Experts":
+            try:
+                current_date = datetime.today().strftime('%d-%m-%Y')
+            except Exception as ex:
+                current_date = "01-01-1970"
+            data.append(current_date)
         # Form and execute the query
+        #data.append(datetime.today().strftime('%d-%m-%Y'))
         query = f"INSERT INTO {table_name} ({', '.join(column_names)}) VALUES ({', '.join(['?'] * len(column_names))})"
         cursor.execute(query, data)
         

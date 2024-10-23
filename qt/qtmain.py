@@ -258,14 +258,17 @@ class add_data_window(QMainWindow):
         self.pushButton_2.setGeometry(10, 310, 81, 21)
         self.pushButton_2.clicked.connect(self.close)
         self.close()
+
     def create_input_fields(self):
         # Получаем имена столбцов для текущей таблицы
-        column_names_rus = get_columns_in_table_rus(os.path.join("data", "DATABASE.db"), self.table_name)
         column_names = get_columns_in_table(os.path.join("data", "DATABASE.db"), self.table_name)
-        for index, column_name_rus in enumerate(column_names_rus):
-            label = QLabel(column_name_rus, self.groupBox)
+        column_names_rus = get_columns_in_table_rus(os.path.join("data", "DATABASE.db"), self.table_name)
+        if self.table_name == "Experts":
+            column_names = column_names[:-1:]
+            column_names_rus = column_names_rus[:-1:]
+        for index, column in enumerate(column_names_rus):
+            label = QLabel(column, self.groupBox)
             label.setGeometry(10, 30 + index * 30, 100, 20)
-
             line_edit = QLineEdit(self.groupBox)
             line_edit.setGeometry(120, 30 + index * 30, 200, 20)
             line_edit.setStyleSheet("QLineEdit { background-color: rgb(35, 35, 35); color: rgb(255, 255, 255); }")  # Темный фон и белый текст
@@ -275,6 +278,8 @@ class add_data_window(QMainWindow):
         # Сбор данных из динамически созданных полей ввода
         data = []
         for column_name in get_columns_in_table(os.path.join("data", "DATABASE.db"), self.table_name):
+            if column_name == "input_date":
+                continue
             value = self.fields[column_name].text()
             data.append(value)
 
