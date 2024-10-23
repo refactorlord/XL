@@ -93,19 +93,19 @@ class MyApp(QMainWindow):
             tb = get_merged_table(file)
             cols = get_merged_columns(file)
             rows = get_merged_rows(file)
-            self.table = QTableWidget(rows - 1, cols)  # Adjusted for header row
+            self.table = QTableWidget(rows, cols)  # Adjusted for header row
             self.table.setColumnCount(cols)
-            self.table.setRowCount(rows - 1)  # Adjusted for header row
-            self.insert_data(tb[1:], rows - 1, cols)  # Skip header row
+            self.table.setRowCount(rows)  # Adjusted for header row
+            self.insert_data(tb[1:], rows, cols)  # Skip header row
             
         else:
             tb = get_table(file, name)
             cols = get_columns_count_in_table(file, name)
             rows = get_rows_count_in_table(file, name)
-            self.table = QTableWidget(rows - 1, cols)  # Adjusted for header row
+            self.table = QTableWidget(rows, cols)  # Adjusted for header row
             self.table.setColumnCount(cols)
-            self.table.setRowCount(rows - 1)  # Adjusted for header row
-            self.insert_data(tb[1:], rows - 1, cols)  # Skip header row
+            self.table.setRowCount(rows)  # Adjusted for header row
+            self.insert_data(tb[1:], rows, cols)  # Skip header row
             
             
         for col in range(cols):
