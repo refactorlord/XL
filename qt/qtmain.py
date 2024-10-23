@@ -264,8 +264,11 @@ class add_data_window(QMainWindow):
         column_names = get_columns_in_table(os.path.join("data", "DATABASE.db"), self.table_name)
         column_names_rus = get_columns_in_table_rus(os.path.join("data", "DATABASE.db"), self.table_name)
         if self.table_name == "Experts":
-            column_names = column_names[:-1:]
-            column_names_rus = column_names_rus[:-1:]
+            column_names = column_names[1:-1:]
+            column_names_rus = column_names_rus[1:-1:]
+        elif self.table_name == "Reg_obl_city":
+            column_names = column_names[1:]
+            column_names_rus = column_names_rus[1:]
         for index, column in enumerate(column_names_rus):
             label = QLabel(column, self.groupBox)
             label.setGeometry(10, 30 + index * 30, 100, 20)
@@ -274,15 +277,18 @@ class add_data_window(QMainWindow):
             line_edit.setStyleSheet("QLineEdit { background-color: rgb(35, 35, 35); color: rgb(255, 255, 255); }")  # Темный фон и белый текст
             self.fields[column_names[index]] = line_edit  # Сохраняем поле ввода в словарь
 
+
     def add_data(self):
         # Сбор данных из динамически созданных полей ввода
         data = []
         for column_name in get_columns_in_table(os.path.join("data", "DATABASE.db"), self.table_name):
+            if column_name == "kod":
+                continue
             if column_name == "input_date":
                 continue
             value = self.fields[column_name].text()
             data.append(value)
-
+        #print("debug: add data: data to append: ", data)
         # Вызов функции для добавления строки в базу данных
         file = os.path.join("data", "DATABASE.db")
         add_row_to_table(file, self.table_name, data)
@@ -490,9 +496,10 @@ class EditDataWindow(QMainWindow):
 
     def create_input_fields(self):
         column_names = get_columns_in_table(os.path.join("data", "DATABASE.db"), self.table_name)
+        column_names_rus = get_columns_in_table_rus(os.path.join("data", "DATABASE.db"), self.table_name)
 
-        for index, column_name in enumerate(column_names):
-            label = QLabel(column_name, self.groupBox)
+        for index, column in enumerate(column_names_rus):
+            label = QLabel(column, self.groupBox)
             label.setGeometry(10, 30 + index * 30, 100, 20)
 
             line_edit = QLineEdit(self.groupBox)
@@ -500,12 +507,12 @@ class EditDataWindow(QMainWindow):
             line_edit.setStyleSheet("QLineEdit { background-color: rgb(35, 35, 35); color: rgb(255, 255, 255); }")  # Темный фон и белый текст
 
             # Получаем текущее значение
-            current_value = get_cell_value(os.path.join("data", "DATABASE.db"), self.table_name, self.row_number, column_name)
+            current_value = get_cell_value(os.path.join("data", "DATABASE.db"), self.table_name, self.row_number, column_names[index])
 
             # Убедитесь, что current_value является строкой
             line_edit.setText(str(current_value) if current_value is not None else '')
 
-            self.fields[column_name] = line_edit  # Сохраняем поле ввода в словарь
+            self.fields[column_names[index]] = line_edit
 
     def save_data(self):
         # Сбор данных из полей ввода
@@ -564,24 +571,19 @@ class del_data_window(QMainWindow):
         self.close()
 
     def close_window(self):
-        
         self.close()  # Close the window
     
     def delete_selected_row(self):
         file = os.path.join("data", "DATABASE.db")
         del_rows = self.select_rows
-        
         for i in del_rows:
             if i is not None:
-                #сделать удаление по коду, а не по номеру строки
+                #сделать удаление по коду, а не по номеру строки 24.10: eto sdelano vrode
                 delete_row_by_code(file, self.table_name, str(i))
                 self.parent.refresh_table()      
         QMessageBox.information(self, "Успех", "Данные успешно удалены!")
         self.close()
         
-        
-    
-
 class ch_data_window(QMainWindow):
     def __init__(self):
         super().__init__()
