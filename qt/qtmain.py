@@ -260,16 +260,16 @@ class add_data_window(QMainWindow):
         self.close()
     def create_input_fields(self):
         # Получаем имена столбцов для текущей таблицы
-        column_names = get_columns_in_table_rus(os.path.join("data", "DATABASE.db"), self.table_name)
-
-        for index, column_name in enumerate(column_names):
-            label = QLabel(column_name, self.groupBox)
+        column_names_rus = get_columns_in_table_rus(os.path.join("data", "DATABASE.db"), self.table_name)
+        column_names = get_columns_in_table(os.path.join("data", "DATABASE.db"), self.table_name)
+        for index, column_name_rus in enumerate(column_names_rus):
+            label = QLabel(column_name_rus, self.groupBox)
             label.setGeometry(10, 30 + index * 30, 100, 20)
 
             line_edit = QLineEdit(self.groupBox)
             line_edit.setGeometry(120, 30 + index * 30, 200, 20)
             line_edit.setStyleSheet("QLineEdit { background-color: rgb(35, 35, 35); color: rgb(255, 255, 255); }")  # Темный фон и белый текст
-            self.fields[column_name] = line_edit  # Сохраняем поле ввода в словарь
+            self.fields[column_names[index]] = line_edit  # Сохраняем поле ввода в словарь
 
     def add_data(self):
         # Сбор данных из динамически созданных полей ввода
