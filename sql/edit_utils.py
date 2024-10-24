@@ -1,5 +1,17 @@
 from sql.get_utils import connect_db, get_rows_count_in_table
 from datetime import datetime
+import os
+def get_next_code(file, table_name):
+    next_code = get_rows_count_in_table(file, table_name)
+    code_file_path = os.path.join(os.getcwd(), "data", f"{table_name}.txt")
+    if not os.path.exists(code_file_path):
+        with open(code_file_path, 'w') as fp:
+            fp.write(str(next_code))
+    with open(code_file_path, 'r') as fp:
+        next_code = int(fp.read()) + 1
+    with open(code_file_path, 'w') as fp:
+        fp.write(str(next_code))
+    return next_code
 
 def add_row_to_table(file: str, table_name: str, data: list) -> None:
     """
@@ -13,6 +25,7 @@ def add_row_to_table(file: str, table_name: str, data: list) -> None:
     try:
         connection = connect_db(file)
         cursor = connection.cursor()
+        next_code = get_next_code(file, table_name)
         
         # Get column names
         cursor.execute(f"PRAGMA table_info({table_name})")
@@ -23,6 +36,9 @@ def add_row_to_table(file: str, table_name: str, data: list) -> None:
             except Exception as ex:
                 current_date = "01-01-1970"
             data.append(current_date)
+            data.insert(0, next_code)
+        elif table_name == "Reg_obl_city":
+            data.insert(0, next_code)
         # Form and execute the query
         #data.append(datetime.today().strftime('%d-%m-%Y'))
         query = f"INSERT INTO {table_name} ({', '.join(column_names)}) VALUES ({', '.join(['?'] * len(column_names))})"
@@ -34,6 +50,7 @@ def add_row_to_table(file: str, table_name: str, data: list) -> None:
         print(f"Error adding data: {ex}")
     finally:
         connection.close()
+
 
 def delete_row_by_number(file: str, table_name: str, row_number: int) -> None:
     """

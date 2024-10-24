@@ -14,9 +14,10 @@ def get_cell_value(file: str, table_name: str, row_number: int, column_name: str
         # Connect to the database
         connection = sqlite3.connect(file)
         cursor = connection.cursor()
-
+        code_column = "kod" * (table_name == "Experts" or table_name == "Reg_obl_city") + "codrub" * (table_name == "grntirub")
+        #print("asdasdasdasdasd: ", code_column)
         # Construct the SQL query to get the cell value
-        query = f"SELECT \"{column_name}\" FROM \"{table_name}\" WHERE ROWID = ?"
+        query = f"SELECT \"{column_name}\" FROM \"{table_name}\" WHERE {code_column} = ?"
         
         # Execute the query
         cursor.execute(query, (row_number,))
@@ -42,10 +43,10 @@ def update_row_in_table(file: str, table_name: str, row_number: int, data: list)
 
         # Получаем имена столбцов
         column_names = get_columns_in_table(file, table_name)
-
+        code_column = "kod" * (table_name == "Experts" or table_name == "Reg_obl_city") + "codrub" * (table_name == "grntirub")
         # Формируем SQL запрос для обновления строки
         set_clause = ', '.join([f'"{column_name}" = ?' for column_name in column_names])
-        query = f"UPDATE \"{table_name}\" SET {set_clause} WHERE ROWID = ?"
+        query = f"UPDATE \"{table_name}\" SET {set_clause} WHERE {code_column} = ?"
 
         # Выполняем запрос
         cursor.execute(query, (*data, row_number))

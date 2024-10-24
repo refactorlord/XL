@@ -6,9 +6,11 @@ from PySide6.QtWidgets import (
     QTableWidgetItem, QWidget, QHeaderView, QMenu, 
     QMenuBar, QSizePolicy, QStatusBar, QAbstractItemView, 
     QPushButton, QDialog, QComboBox, QLineEdit, 
-    QGroupBox, QLabel, QHBoxLayout, QVBoxLayout, QGridLayout
+    QGroupBox, QLabel, QHBoxLayout, QVBoxLayout, QGridLayout,
 )
 from PySide6.QtGui import QPalette, QColor, QAction
+from PyQt6.QtCore import QRegularExpression
+from PyQt6.QtGui import QRegularExpressionValidator
 from sql.cell_utils import *
 from sql.edit_utils import *
 from sql.get_utils import *
@@ -51,6 +53,11 @@ class MyApp(QMainWindow):
         
         if self.current_table_name == "all":
             filtr = self.context_menu.addAction("Фильтрация")
+            sort_menu = self.context_menu.addMenu("Сортировка")
+            sort_asc = sort_menu.addAction("Сортировка по возрастанию")
+            sort_desc = sort_menu.addAction("Сортировка по убыванию")
+            sort_asc.triggered.connect(lambda: self.sort_column(True))
+            sort_desc.triggered.connect(lambda: self.sort_column(False))
             filtr.triggered.connect(self.filter_data_triggered)
 
     def create_menu(self): 
@@ -188,7 +195,7 @@ class MyApp(QMainWindow):
     
     def refresh_table(self):
         file = os.path.join("data", "DATABASE.db")
-        tb = get_table(file, self.get_current_table_name())
+        tb = get_table(file, self.get_current_table_name())[1:]
         cols = get_columns_count_in_table(file, self.get_current_table_name())
         rows = len(tb)
         self.table.setRowCount(rows)
@@ -262,39 +269,110 @@ class add_data_window(QMainWindow):
     def create_input_fields(self):
         # Получаем имена столбцов для текущей таблицы
         column_names = get_columns_in_table(os.path.join("data", "DATABASE.db"), self.table_name)
+        print(column_names)
         column_names_rus = get_columns_in_table_rus(os.path.join("data", "DATABASE.db"), self.table_name)
         if self.table_name == "Experts":
-            column_names = column_names[:-1:]
-            column_names_rus = column_names_rus[:-1:]
-        for index, column in enumerate(column_names_rus):
-            label = QLabel(column, self.groupBox)
-            label.setGeometry(10, 30 + index * 30, 100, 20)
-            line_edit = QLineEdit(self.groupBox)
-            line_edit.setGeometry(120, 30 + index * 30, 200, 20)
-            line_edit.setStyleSheet("QLineEdit { background-color: rgb(35, 35, 35); color: rgb(255, 255, 255); }")  # Темный фон и белый текст
-            self.fields[column_names[index]] = line_edit  # Сохраняем поле ввода в словарь
+            column_names = column_names[1:-1:]
+            column_names_rus = column_names_rus[1:-1:]
+        elif self.table_name == "Reg_obl_city":
+            column_names = column_names[1:]
+            column_names_rus = column_names_rus[1:]
+
+        if self.table_name != "Experts":
+            for index, column_name in enumerate(column_names):
+                label = QLabel(column_names_rus[index], self.groupBox)
+                label.setGeometry(10, 30 + index * 30, 100, 20)
+                line_edit = QLineEdit(self.groupBox)
+                if (column_name == 'kod'):
+                    line_edit.setReadOnly(True)
+                if(self.table_name == "grntirub"):
+                    if (column_name == "codrub"):
+                        line_edit.setPlaceholderText("Введите код рубрики..")
+                    else:
+                        line_edit.setPlaceholderText("Введите название рубрики..")
+                else:
+                    if(column_name == "region"):
+                        line_edit.setPlaceholderText("Введите регион..")
+                    elif (column_name == "oblname"):
+                        line_edit.setPlaceholderText("Введите область..")
+                    elif(column_name == "city"):
+                        line_edit.setPlaceholderText("Введите город..")
+                line_edit.setGeometry(120, 30 + index * 30, 200, 20)
+                line_edit.setStyleSheet("QLineEdit { background-color: rgb(35, 35, 35); color: rgb(255, 255, 255); }")  # Dark background and white text
+                self.fields[column_name] = line_edit  # Save input field in dictionary
+        else:
+            for index, column_name in enumerate(column_names):
+                label = QLabel(column_names_rus[index], self.groupBox)
+                label.setGeometry(10, 30 + index * 30, 100, 20)
+                if (column_name != "grnti" and column_name != "region" and column_name != "city"):
+                    line_edit = QLineEdit(self.groupBox)
+                    #if (column_name == 'kod'):
+                        #line_edit.setReadOnly(True)
+                    if (column_name == "name"):
+                        line_edit.setPlaceholderText("Введите ФИО..")
+                    elif (column_name == "key_words"):
+                        line_edit.setPlaceholderText("Введите ключевые слова..")
+                    elif (column_name == "take_part"):
+                        line_edit.setPlaceholderText("Введите участие..")
+                    line_edit.setGeometry(120, 30 + index * 30, 200, 20)
+                    line_edit.setStyleSheet("QLineEdit { background-color: rgb(35, 35, 35); color: rgb(255, 255, 255); }")  # Dark background and white text
+                    
+                    self.fields[column_name] = line_edit  # Save input field in dictionary
+                    print(line_edit.text())
+                    print(self.fields[column_name])
+
+            file = os.path.join("data", "DATABASE.db")
+            self.combobox = QComboBox(self.groupBox)
+            self.combobox.setGeometry(120, 30 + column_names.index("region") * 30, 200, 20)
+            self.combobox2 = QComboBox(self.groupBox)
+            self.combobox2.setGeometry(120, 30 + column_names.index("grnti") * 30, 200, 20)
+            self.combobox3 = QComboBox(self.groupBox)
+            self.combobox3.setGeometry(120, 30 + column_names.index("city") * 30, 200, 20)
+            a = get_table(file, "Reg_obl_city")
+            regions = sorted(list(set(row[1] for row in a)))
+            for value in regions:
+                if value != "Регион":
+                    self.combobox.addItem(value)
+            self.fields[column_names[column_names.index("region")]] = self.combobox.currentText()  # Save input field in dictionary
+            b = get_table(file, "grntirub")
+            grnti = sorted(list(set(row[0] for row in b)))
+            for value in grnti:
+                if value != "Код":
+                    self.combobox2.addItem(value)
+            self.fields[column_names[column_names.index("grnti")]] = self.combobox2.currentText()  # Save input field in dictionary
+            self.fields[column_names[column_names.index("city")]] = self.combobox3.currentText()
+            self.combobox.activated.connect(lambda: self.gorod_filtr(a))
+            self.combobox.activated.connect(lambda: self.update_field('region'))
+            self.combobox2.activated.connect(lambda: self.update_field('grnti'))
+            self.combobox3.activated.connect(lambda: self.update_field('city'))
+
 
     def add_data(self):
-        # Сбор данных из динамически созданных полей ввода
         data = []
-        for column_name in get_columns_in_table(os.path.join("data", "DATABASE.db"), self.table_name):
-            if column_name == "input_date":
-                continue
-            value = self.fields[column_name].text()
-            data.append(value)
-
-        # Вызов функции для добавления строки в базу данных
+        if self.table_name == "Experts":
+            data = [
+                self.fields['name'].text(),
+                self.fields['region'],
+                self.fields['city'],
+                self.fields['grnti'],
+                self.fields['key_words'].text(),
+                self.fields['take_part'].text(),
+            ]
+        else:
+            for column_name in get_columns_in_table(os.path.join("data", "DATABASE.db"), self.table_name):
+                if column_name == "kod":
+                    continue
+                if column_name == "input_date":
+                    continue
+                value = self.fields[column_name].text()
+                data.append(value)
+        print(data)
         file = os.path.join("data", "DATABASE.db")
         add_row_to_table(file, self.table_name, data)
 
-        # Очищаем поля ввода после добавления
-        self.clear_fields()
-
-        # Обновляем основную таблицу, чтобы отобразить новые данные
         self.parent.refresh_table()
         QMessageBox.information(self, "Успех", "Данные успешно добавлены.")
         self.close()
-        #перекидывает на последнюю добавленную строку
         row_count = self.parent.table.rowCount()
         self.parent.table.scrollToBottom()
         self.parent.table.selectRow(row_count - 1)
@@ -302,7 +380,30 @@ class add_data_window(QMainWindow):
     def clear_fields(self):
         for line_edit in self.fields.values():
             line_edit.clear()
-            
+    def obl_filtr(self, a):
+        selected_region = self.combobox.currentText()
+        self.combobox4.clear()
+        self.combobox3.clear()
+        self.combobox4.addItem("Любая Область")
+        obls = sorted(list(set(row[2] for row in a if row[1] == selected_region)))
+        for value in obls:
+            if value != "Область":
+                self.combobox4.addItem(value)
+        
+    def gorod_filtr(self, a):
+        self.combobox3.clear()
+        selected_region = self.combobox.currentText()
+        self.combobox3.addItem("Выберите город")
+        #print(a)
+        city = sorted(list(set(row[3] for row in a if row[1] == selected_region)))
+        for value in city:
+            #print(value)
+            if value != "Город":
+                #print(value)
+                self.combobox3.addItem(value)
+    def update_field(self, field_name):
+        self.fields[field_name] = self.combobox.currentText() if field_name == 'region' else self.combobox2.currentText() if field_name == 'grnti' else self.combobox3.currentText()
+        print(self.fields)
             
 class filter_data_window(QMainWindow):
     def __init__(self, parent):
@@ -463,7 +564,7 @@ class EditDataWindow(QMainWindow):
         self.setWindowModality(Qt.ApplicationModal)
         self.parent = parent
         self.table_name = table_name
-
+        
         self.row_number = row_number  # Используем 1-based индекс
         self.setWindowTitle("Редактирование данных")
         self.setGeometry(100, 100, 600, 500)
@@ -485,32 +586,117 @@ class EditDataWindow(QMainWindow):
         self.pushButton_2.setGeometry(10, 310, 81, 21)  # Отступ сверху
         self.pushButton_2.clicked.connect(self.close)
 
+
+
         self.dark_theme = DarkTheme()
         self.dark_theme.apply(self)
 
     def create_input_fields(self):
         column_names = get_columns_in_table(os.path.join("data", "DATABASE.db"), self.table_name)
+        column_names_rus = get_columns_in_table_rus(os.path.join("data", "DATABASE.db"), self.table_name)
+        if self.table_name != "Experts":
+            for index, column_name in enumerate(column_names):
+                label = QLabel(column_names_rus[index], self.groupBox)
+                label.setGeometry(10, 30 + index * 30, 100, 20)
+                line_edit = QLineEdit(self.groupBox)
+                if (column_name == 'kod'):
+                    line_edit.setReadOnly(True)
+                if (column_name == "input_date"):
+                    line_edit.setReadOnly(True)
+                line_edit.setGeometry(120, 30 + index * 30, 200, 20)
+                line_edit.setStyleSheet("QLineEdit { background-color: rgb(35, 35, 35); color: rgb(255, 255, 255); }")  # Темный фон и белый текст
 
-        for index, column_name in enumerate(column_names):
-            label = QLabel(column_name, self.groupBox)
-            label.setGeometry(10, 30 + index * 30, 100, 20)
+                # Получаем текущее значение
+                current_value = get_cell_value(os.path.join("data", "DATABASE.db"), self.table_name, self.row_number, column_name)
+                print(current_value)
+                # Убедитесь, что current_value является строкой
+                line_edit.setText(str(current_value) if current_value is not None else '')
+                print(line_edit.text())
+                self.fields[column_name] = line_edit # Сохраняем поле ввода в словарь
+        else:
+            today_date = datetime.now().strftime("%d-%m-%Y")
+            for index, column_name in enumerate(column_names):
+                label = QLabel(column_names_rus[index], self.groupBox)
+                label.setGeometry(10, 30 + index * 30, 100, 20)
+                if (column_name != "grnti" and column_name != "region" and column_name != "city"):
+                    line_edit = QLineEdit(self.groupBox)
+                    if (column_name == 'kod'):
+                        line_edit.setReadOnly(True)
+                    if (column_name == "name"):
+                        line_edit.setPlaceholderText("Введите ФИО..")
+                    elif (column_name == "key_words"):
+                        line_edit.setPlaceholderText("Введите ключевые слова..")
+                    elif (column_name == "take_part"):
+                        line_edit.setPlaceholderText("Введите участие..")
+                    line_edit.setGeometry(120, 30 + index * 30, 200, 20)
+                    line_edit.setStyleSheet("QLineEdit { background-color: rgb(35, 35, 35); color: rgb(255, 255, 255); }")  # Темный фон и белый текст
+                    current_value = get_cell_value(os.path.join("data", "DATABASE.db"), self.table_name, self.row_number, column_name)
+                    if (column_name == "input_date"):
+                        line_edit.setReadOnly(True)
+                        line_edit.setText(today_date)
+                    else:
+                        line_edit.setText(str(current_value) if current_value is not None else '')
+                    self.fields[column_name] = line_edit.text()  # Сохраняем поле ввода в словарь
 
-            line_edit = QLineEdit(self.groupBox)
-            line_edit.setGeometry(120, 30 + index * 30, 200, 20)
-            line_edit.setStyleSheet("QLineEdit { background-color: rgb(35, 35, 35); color: rgb(255, 255, 255); }")  # Темный фон и белый текст
+            file = os.path.join("data", "DATABASE.db")
+            self.combobox = QComboBox(self.groupBox)
+            self.combobox.setGeometry(120, 30 + column_names.index("region") * 30, 200, 20)
+            self.combobox2 = QComboBox(self.groupBox)
+            self.combobox2.setGeometry(120, 30 + column_names.index("grnti") * 30, 200, 20)
+            self.combobox3= QComboBox(self.groupBox)
+            self.combobox3.setGeometry(120, 30 + column_names.index("city") * 30, 200, 20)
+            #self.combobox2.setGeometry(120, 30 + index * 30, 200, 20)
+            a = get_table(file, "Reg_obl_city")
+            regions = sorted(list(set(row[1] for row in a)))
+            current_value = get_cell_value(file, self.table_name, self.row_number, column_names[column_names.index("region")])
+            self.combobox.addItem(current_value)
+            for value in regions:
+                if value != "Регион" and value != current_value:
+                    self.combobox.addItem(value)
+            #self.combobox.activated.connect(lambda: self.gorod_filtr(a))
+            self.fields[column_names[column_names.index("region")]] = self.combobox.currentText()  # Сохраняем поле ввода в словарь
 
-            # Получаем текущее значение
-            current_value = get_cell_value(os.path.join("data", "DATABASE.db"), self.table_name, self.row_number, column_name)
-
-            # Убедитесь, что current_value является строкой
-            line_edit.setText(str(current_value) if current_value is not None else '')
-
-            self.fields[column_name] = line_edit  # Сохраняем поле ввода в словарь
-
+            current_value = get_cell_value(file, self.table_name, self.row_number, column_names[column_names.index("grnti")])
+            b = get_table(file, "grntirub")
+            grnti = sorted(list(set(row[0] for row in b)))
+            self.combobox2.addItem(current_value)
+            for value in grnti:
+                if value != "Код" and value != current_value:
+                    self.combobox2.addItem(value)
+            self.fields[column_names[column_names.index("grnti")]] = self.combobox2.currentText()  # Сохраняем поле ввода в словарь
+            current_value = get_cell_value(file, self.table_name, self.row_number, column_names[column_names.index("city")])
+            self.combobox3.addItem(current_value)
+            self.fields[column_names[column_names.index("city")]] = self.combobox3.currentText()
+            self.combobox.activated.connect(lambda: self.gorod_filtr(a))
+            self.combobox.activated.connect(lambda: self.update_field('region'))
+            self.combobox2.activated.connect(lambda: self.update_field('grnti'))
+            self.combobox3.activated.connect(lambda: self.update_field('city'))
+            self.pushButton3 = QPushButton(self.groupBox)
+            self.pushButton3.setGeometry(330, 30 + column_names.index("grnti") * 30, 20, 20)
+            self.pushButton3.setText("+")
+            self.pushButton3.clicked.connect(lambda:self.input_grnti(column_names))
+            print(self.fields)
+    def update_field(self, field_name):
+        self.fields[field_name] = self.combobox.currentText() if field_name == 'region' else self.combobox2.currentText() if field_name == 'grnti' else self.combobox3.currentText()
+        print(self.fields)
     def save_data(self):
         # Сбор данных из полей ввода
-        data = [self.fields[column_name].text() for column_name in self.fields]
-
+        # Сбор данных из полей ввода
+        data = []
+        if self.table_name == "Experts":
+            data = [
+                self.fields['kod'],
+                self.fields['name'],
+                self.fields['region'],
+                self.fields['city'],
+                self.fields['grnti'],
+                self.fields['key_words'],
+                self.fields['take_part'],
+                self.fields['input_date']
+            ]
+        else:
+            data = [self.fields[column_name].text() for column_name in self.fields]
+        print(data)
         # Обновление строки в таблице
         update_row_in_table(os.path.join("data", "DATABASE.db"), self.table_name, self.row_number, data)
 
@@ -519,6 +705,29 @@ class EditDataWindow(QMainWindow):
 
         # Закрытие окна
         self.close()
+    
+    def input_grnti(self,column_names):
+        self.combobox2.deleteLater()
+        input_box = QLineEdit(self.groupBox)
+        input_box.setPlaceholderText("Введите ГРНТИ..")
+        self.fields[column_names[column_names.index("grnti")]] = input_box.text()  # Сохраняем поле ввода в словарь
+        input_box.setStyleSheet("QLineEdit { background-color: rgb(35, 35, 35); color: rgb(255, 255, 255); }")
+        input_box.setGeometry(120, 30 + column_names.index("grnti") * 30, 200, 20)
+        input_box.show()
+        self.pushButton3.deleteLater()
+        
+        
+    def gorod_filtr(self, a):
+        self.combobox3.clear()
+        selected_region = self.combobox.currentText()
+        self.combobox3.addItem("Выберите город")
+        #print(a)
+        city = sorted(list(set(row[3] for row in a if row[1] == selected_region)))
+        for value in city:
+            #print(value)
+            if value != "Город":
+                #print(value)
+                self.combobox3.addItem(value)
 
 
 
