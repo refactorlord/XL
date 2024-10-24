@@ -540,23 +540,28 @@ class filter_data_window(QMainWindow):
         tb = filtered_data
         cols = 8
         rows = len(filtered_data) - 1
-        self.table = QTableWidget(rows - 1, cols)  # Adjusted for header row
-        self.table.setColumnCount(cols)
-        self.table.setRowCount(rows - 1)  # Adjusted for header row
-        self.parent.insert_data(self, tb[1:], rows - 1, cols)  # Skip header row
-        for col in range(cols):
-            self.table.setHorizontalHeaderItem(col, QTableWidgetItem(tb[0][col]))  # Set header names
-        self.setWindowTitle("Управление организацией экспертизы научно-технических проектов: [ Объединенные таблицы ] [ Применен фильтр ]")
-        self.dark_theme = DarkTheme() 
-        self.dark_theme.apply(self)
-        self.table.horizontalHeader().setStyleSheet("QHeaderView::section { background-color: rgb(53, 53, 53); color: white; }")
-        self.table.verticalHeader().setStyleSheet("QHeaderView::section { background-color: rgb(53, 53, 53); color: white; }")
-        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-#       self.parent.update_context_menu(self)
-        for i in range(cols):
-            self.parent.adjust_column_width(self, i)
-        self.setCentralWidget(self.table)
+        if (rows > 0):
+
+            self.table = QTableWidget(rows - 1, cols)  # Adjusted for header row
+            self.table.setColumnCount(cols)
+            self.table.setRowCount(rows - 1)  # Adjusted for header row
+            self.parent.insert_data(self, tb[1:], rows - 1, cols)  # Skip header row
+            for col in range(cols):
+                self.table.setHorizontalHeaderItem(col, QTableWidgetItem(tb[0][col]))  # Set header names
+            self.setWindowTitle("Управление организацией экспертизы научно-технических проектов: [ Объединенные таблицы ] [ Применен фильтр ]")
+            self.dark_theme = DarkTheme() 
+            self.dark_theme.apply(self)
+            self.table.horizontalHeader().setStyleSheet("QHeaderView::section { background-color: rgb(53, 53, 53); color: white; }")
+            self.table.verticalHeader().setStyleSheet("QHeaderView::section { background-color: rgb(53, 53, 53); color: white; }")
+            self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+            self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+    #       self.parent.update_context_menu(self)
+            for i in range(cols):
+                self.parent.adjust_column_width(self, i)
+            self.setCentralWidget(self.table)
+        else:
+            QMessageBox.information(self, "Ошибка", "Результатов: 0")
+            self.close()
 
 class EditDataWindow(QMainWindow):
     def __init__(self, parent, table_name, row_number):
